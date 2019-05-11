@@ -3,9 +3,11 @@ package test.disruptor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.snake.testmessage.event.MessageEvent;
 
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.ExceptionHandler;
@@ -16,7 +18,6 @@ import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
 
-import abc.bcd.event.MessageEvent;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
@@ -70,11 +71,18 @@ public class DQEventProcessor {
 	            
 	        } finally {
 	        	
+//	        	System.err.println("s enq: " + COUNTER.getAndIncrement() + "  " + sequence);
+		    	
+	        	
 	            ringBuffer.publish(sequence);
 	        }
     	} 
 
     }
+    
+    public static final AtomicInteger COUNTER = new AtomicInteger(0);
+
+
 
     /**
      * Increases the reference count and creates and starts a new Disruptor and associated thread if none currently
@@ -90,7 +98,7 @@ public class DQEventProcessor {
     			new Disruptor<MessageEvent>(eventFactory, 
     								   RING_BUFFER_SIZE, 
     								   executor, 
-    								   ProducerType.SINGLE, 
+    								   ProducerType.MULTI, 
     								   waitStrategy);
     
     	ExceptionHandler<MessageEvent> exceptionHandler = new DQEventExceptionHandler();

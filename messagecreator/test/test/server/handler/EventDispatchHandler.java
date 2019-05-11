@@ -16,19 +16,19 @@ public class EventDispatchHandler extends ChannelInboundHandlerAdapter {
 	public static final DQEventProcessor EVENT_PROCESSOR = DQEventProcessor.getInstance();
 	
 	
-	
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     	
     	try {
 	    	
 	    	EVENT_PROCESSOR.enqueue(ctx.channel(), 0, (ByteBuf)msg);
-	    		    	    	
+	    		    		    	    	
     	} finally {
     		ReferenceCountUtil.release(msg);
     	}  
     	
     }
+    
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

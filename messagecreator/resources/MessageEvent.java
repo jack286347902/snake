@@ -1,17 +1,16 @@
 
+import java.io.UnsupportedEncodingException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public class MessageEvent {
 
-	public static final byte[] ZERO_HEADER = new byte[] {0, 0, 0, 0, 0};
 	
+	public static final int CMD_OFFSET = 4;
 	
-	public static final int CMD_OFFSET = 2;
-	public static final int DATA_HASH_OFFSET = 4;
-	
-	public static final int HEADER_LENGTH = 5;
-	public static final int HASH_LENGTH = 1;
+	public static final int HEADER_LENGTH = 6;
 	public static final int UUID_LENGTH = 8;
 	
 	private Channel channel;
@@ -43,33 +42,22 @@ public class MessageEvent {
 	 *  message structure:
 	 * 			short size
 	 * 			short cmd
-	 * 			byte dataHash: data[i]^
 	 * 			byte[] data -> message
 	 *  
 	 *  @param buf directbuf from netty
 	 *  
 	 */
-	public void parse(ByteBuf buf) throws Exception {
+	public void parse(ByteBuf buf) throws UnsupportedEncodingException {
 		
-		short size = buf.readShort();
+		buf.skipBytes(CMD_OFFSET);
 		short cmd = buf.readShort();
-		byte dataHash = buf.readByte();
-		
-		int dataSize = size - HEADER_LENGTH;
-		int dataIndex = buf.readerIndex();
-
-		if(dataHash(dataIndex, dataSize, buf) != dataHash) {
-
-			throw new Exception("dataHash error: dataHash(dataIndex, dataSize, buf)=" + dataHash(dataIndex, dataSize, buf) + 
-					" != dataHash=" + dataHash);
-			
-		}
 
 		message = MessagePool.borrowMessage(cmd);
 		
 		message.parse(buf);
-				
+		
 	}
+
 	
 	/*
 	 *  connecter send and receive data from other server:
@@ -77,7 +65,6 @@ public class MessageEvent {
 	 *  message structure:
 	 * 			short size
 	 * 			short cmd
-	 * 			byte dataHash: data[i]^
 	 * 			byte[] data -> message
 	 *  
 	 *  @param buf directbuf from netty
@@ -115,26 +102,33 @@ public class MessageEvent {
 	}
 
 	// Exception: message recycled by gc
-	public void array(ByteBuf buf) throws Exception {
+	public void array(ByteBuf buf) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 		
-		int headIndex = buf.writerIndex();
 		
-		buf.writeBytes(ZERO_HEADER);
+		// this line to next 5 unempty line must here, 
+		// can't move to message.array(buf)
+		// why??????????????????????????????????????
+
+		int totalLen = message.getSize() + HEADER_LENGTH;
 		
-		int dataIndex = buf.writerIndex();
+		if(!buf.isWritable(totalLen))
+			buf.ensureWritable(totalLen);
+		
+		buf.writeInt(totalLen);
+		buf.writeShort(message.getCmdShort());
+		
 		message.array(buf);
-		int dataSize = buf.writerIndex() - dataIndex;
-		
-		int size = buf.writerIndex() - headIndex;
-		
-		buf.setShort(headIndex, size);
-		buf.setShort(headIndex + CMD_OFFSET, message.getCmdShort());
-		buf.setByte(headIndex + DATA_HASH_OFFSET, dataHash(dataIndex, dataSize, buf));
-		
+
+		// next unempty line must here, 
+		// can't move to message.array(buf)
+		// why??????????????????????????????????????
 		message.release();
 		
+
 	}
+	
+	
 	
 	// Exception: message recycled by gc
 //	public void arrayWithUuid(ByteBuf buf) throws Exception {

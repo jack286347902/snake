@@ -14,7 +14,8 @@ public class ServerEventDecoder extends ByteToMessageDecoder {
 	public static final Logger logger = LogManager.getLogger("EventDispatchHandler");
 	
 	
-	public static final int SIZE_LENGTH = 2;
+	public static final int SIZE_LENGTH = 4;
+	
 	
 	@Override
 	protected void decode(ChannelHandlerContext arg0, ByteBuf arg1,
@@ -48,19 +49,29 @@ public class ServerEventDecoder extends ByteToMessageDecoder {
 			// 标记读位置
 			buf.markReaderIndex();
 			
-			short size = buf.readShort();
+			int size = buf.readInt();
 			
 			buf.resetReaderIndex();
 			
-			if(buf.isReadable(size))
+			if(buf.isReadable(size)) 
 				return buf.readRetainedSlice(size);
+			
+//			if(buf.isReadable(size)) {
+//				
+//				ByteBuf heapBuf = ctx.alloc().heapBuffer(size);
+//				
+//				buf.readBytes(heapBuf, size);
+//				
+//				return heapBuf;
+//				
+//				
+//			}
 
 		}
 				
 		return null;
 
 	}
-	
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

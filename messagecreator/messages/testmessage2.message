@@ -1,27 +1,22 @@
 import "testmessage.message"
-java_package = abc.bcd.efgh
+java_package = org.snake.testmessage.m2
 group_cmd = 2000;	
 
-//areq
+//FirstRequest
 /*
- * areq别想吴三桂顺中
+ * FirstRequest testing.........
  */
-message AReq {
+message FirstRequest {
 
-	required double 	dd;						//	 double
-	required float 	ff;						//
-	required int32 	i32;					//
-	required int64 	i64;					//
-	required bool 	isArray;				//
-	required string 	name;					//
-	required Item		item;	
-	
-	repeated double 	l1;			// list
-	repeated float 		l2;			//
-	repeated int32 		l3;			
-	repeated int64 		l4;			//
-	repeated bool 		l5;			
-	repeated string 	l6;			
-	repeated Item		l7;			
+	required double 	add;						//	 double
+	required float 	aff;						//
+	required int32 	ai32;					//
+	required int64 	ai64;					//
+	required bool 	aisArray;				//
+	required string 	aname;					//
+	required Item		aitem;	
+			
+	repeated string 	al6;			
+	repeated Item		al7;			
 
 }

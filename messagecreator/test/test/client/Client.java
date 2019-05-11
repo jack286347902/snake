@@ -1,25 +1,31 @@
 package test.client;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-import abc.bcd.efg.Item;
-import abc.bcd.efgh.AReq;
-import abc.bcd.event.MessageEvent;
-import abc.bcd.pool.MessagePool;
+import org.snake.testmessage.m1.Empty;
+import org.snake.testmessage.m1.Item;
+import org.snake.testmessage.m1.Small;
+import org.snake.testmessage.m2.FirstRequest;
+import org.snake.testmessage.m3.SecondRequest;
+import org.snake.testmessage.pool.MessagePool;
+
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import test.client.handler.ClientMessageEvent;
 
 
 public class Client extends Thread {
 	
 	public static Client INSTANCE = null;
     
-	public static EventLoopGroup group = null;
+	public EventLoopGroup group = null;
 
 	
 	private Client() {
@@ -45,65 +51,63 @@ public class Client extends Thread {
     
 
     
-    public void writeMessage(Channel channel) throws Exception {
+    public FirstRequest CreateFirstRequestMessage(int i32) {
     	
     	
-    	AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);
+    	FirstRequest message = (FirstRequest)MessagePool.borrowMessage(FirstRequest.CMD_INTEGER);
     	
-    	message.setDd(0.001);
-    	message.setFf(0.002f);
-    	message.setI32(32);
-    	message.setI64(64);
-    	message.setIsArray(true);
-    	message.setName("jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
-    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu");
+    	message.setAdd(0.001);
+    	message.setAff(0.002f);
+    	message.setAi32(i32);
+    	message.setAi64(64);
+    	message.setAisArray(true);
+    	message.setAname("AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);"
+    			+ "AReq message = (AReq)MessagePool.borrowMessage(AReq.CMD_INTEGER);");
     	
-    	Item item = message.getItem();
     	
-    	fillItemBaseType(item, 66);
+//    	message.setName("jack");
+    	Item item = message.getAitem();
     	
-    	double[] l1 = new double[]{10.1, 20.1};
-    	float[] l2 = new float[]{0.002f, 30.2f};
-    	int[] l3 = new int[]{11, 22, 33};
-    	long[] l4 = new long[]{22, 55, 66};
-    	boolean[] l5 = new boolean[]{true, false,  true};
+//    	fillItemBaseType(item, i32);
+    	
+    	fillItem(item, i32);
+    	
+
+    	
     	String[] l6 = new String[]{"abc", "def", "dkdk"};
+
+    	message.setAl6(l6);
     	
-    	message.setL1(l1);
-    	message.setL2(l2);
-    	message.setL3(l3);
-    	message.setL4(l4);
-    	message.setL5(l5);
-    	message.setL6(l6);
-    	
-    	List<Item> list = message.getL7();
+    	List<Item> list = message.getAl7();
     	
     	for(int i = 0; i < 4; ++i) {
     		
     		Item iTemp = (Item)MessagePool.borrowMessage(Item.CMD_INTEGER);
     		
-    		fillItem(iTemp, i);
+    		fillItem(iTemp, i32 * 1000 + i);
     		
     		list.add(iTemp);
     	}
-    		
-	    for(int i = 0; i < 10000; ++i)  { 
-	    	
-	    	MessageEvent event = new MessageEvent();
-	    	
-	    	event.setMessage(message);
-	    	
-	    	channel.writeAndFlush(event);
+    	
+    	return message;
+   		
 
-    		
-    	}
+
     }
-    
+        
     private void fillItemBaseType(Item item, int sign) {
     	
     	item.setId(sign);
@@ -115,36 +119,175 @@ public class Client extends Thread {
     	item.setI32(32);
     	item.setI64(64);
     	item.setIsArray(true);
-    	item.setName("jack liu");
+//    	item.setName("jack liu");
+    	
+
     
     }
     private void fillItem(Item item, int sign) {
     	
     	fillItemBaseType(item, sign);
     	
-    	double[] l1 = new double[]{10.1, 20.1};
-    	float[] l2 = new float[]{0.002f, 30.2f};
-    	byte[] l831 = new byte[]{0xf, 0x5};
-    	short[] l31 = new short[]{10, 20};
-    	int[] l3 = new int[]{11, 22, 33};
-    	long[] l4 = new long[]{22, 55, 66};
-    	boolean[] l5 = new boolean[]{true, false,  true};
-    	String[] l6 = new String[]{"abc", "def", "dkdk"};
+    	item.setName(sign + "      jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu"
+    			+ "jack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liujack liu");
     	
-    	item.setL1(l1);
-    	item.setL2(l2);
-    	item.setL831(l831);
-    	item.setL31(l31);
-    	item.setL3(l3);
-    	item.setL4(l4);
-    	item.setL5(l5);
+    	
+    	String[] l6 = new String[]{"abc", "def", "dkdk"};
+
     	item.setL6(l6);
     	
     	
     }
     
+    public SecondRequest createSecondRequestMessage(int i32) {
+    	
+    	SecondRequest message = (SecondRequest)MessagePool.borrowMessage(SecondRequest.CMD_INTEGER);
+    	
+    	message.setAdd(11.11);
+    	
+    	message.setAdd(0.001);
+    	message.setAff(0.002f);
+    	message.setAi32(i32);
+    	message.setAi64(64);
+    	message.setAisArray(true);
+    	message.setAname(i32 + "         jack liu");
+    	
+    	Item item = message.getAitem();
+    	
+    	fillItem(item, i32);
+    	
+    	String[] l6 = new String[]{"abc", "def", "dkdk", "abc"};
+
+    	message.setAl6(l6);
+    	
+    	List<Item> al7 = message.getAl7();
+    	
+    	for(int i = 0; i < 5; ++i) {
+    		
+    		Item iTemp = (Item)MessagePool.borrowMessage(Item.CMD_INTEGER);
+    		
+    		fillItem(iTemp, i32 * 1000 + i);
+    		
+    		al7.add(iTemp);
+    	}
+    	
+    	List<FirstRequest> fRequest = message.getFRequest();
+    	
+    	for(int i = 0; i < 2; ++i) {    		
+    		fRequest.add(CreateFirstRequestMessage(i32++));
+    	}
+    	
+    	return message;
+    }
     
+    
+    public Item createItemMessage(int i32) {
+    	
+    	Item message = (Item)MessagePool.borrowMessage(Item.CMD_INTEGER);
+    	
+    	fillItem(message, i32);
+    	
+    	return message;
+    }
+    
+    public Item createItemWithNullMessage(int i32) {
+    	
+    	Item message = (Item)MessagePool.borrowMessage(Item.CMD_INTEGER);
+    	
+    	fillItemBaseType(message, i32);
+    	
+    	return message;
+    }
 			
+    
+    public Empty createEmptyMessage() {
+    	
+    	Empty message = (Empty)MessagePool.borrowMessage(Empty.CMD_INTEGER);
+    	
+    	return message;
+    }
+    
+    
+    public Small createSmallMessage(int i32) {
+    	
+    	Small message = (Small)MessagePool.borrowMessage(Small.CMD_INTEGER);
+    	
+    	message.setId(i32);
+    	message.setCount(i32);
+    	message.setFf(0.002f);
+    	message.setDd(0.3);
+    	message.setI8((byte) 8);
+    	message.setI16((short) 16);
+    	message.setI32(32);
+    	message.setI64(64);
+    	
+    	return message;
+    }
+    
+    
+	private void writeMessage(Channel channel) throws UnsupportedEncodingException {
+		
+		for(int i = 0; i < 10000; ++i) {
+			
+			
+	    	ClientMessageEvent event = new ClientMessageEvent();
+			
+	    	event.setMessage(createItemMessage(i));
+	    	
+	    	channel.writeAndFlush(event);
+	    	
+	    	ClientMessageEvent event2 = new ClientMessageEvent();
+	    	
+	    	event2.setMessage(createEmptyMessage());
+	    	
+	    	channel.writeAndFlush(event2);
+	    	
+	    	ClientMessageEvent event3 = new ClientMessageEvent();
+	    	
+	    	event3.setMessage(createSmallMessage(i));
+	    	
+	    	channel.writeAndFlush(event3);
+	    	
+	    	ClientMessageEvent event4 = new ClientMessageEvent();
+	    	
+	    	event4.setMessage(CreateFirstRequestMessage(i));
+	    	
+	    	channel.writeAndFlush(event4);
+	    	
+	    	ClientMessageEvent event5 = new ClientMessageEvent();
+	    	
+	    	event5.setMessage(createSecondRequestMessage(i));
+	    	
+	    	channel.writeAndFlush(event5);
+			
+		}
+		
+
+	}
+    
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -164,7 +307,9 @@ public class Client extends Thread {
     		
     		Channel channel = f.channel();
     		
-    		writeMessage(channel);
+    		
+    		
+	    	writeMessage(channel);
     		
     		channel.closeFuture().sync();
 
@@ -180,6 +325,8 @@ public class Client extends Thread {
         }
 		
 	}
+	
+
 
     
     

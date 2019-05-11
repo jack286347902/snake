@@ -1,19 +1,41 @@
 package test.client.handler;
 
 
-import abc.bcd.event.MessageEvent;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.util.ReferenceCountUtil;
 
-public class EventEncoder extends MessageToByteEncoder<MessageEvent> {
+public class EventEncoder extends MessageToByteEncoder<ClientMessageEvent> {
 
-	@Override
-	protected void encode(ChannelHandlerContext ctx, MessageEvent msg, ByteBuf out) throws Exception {
-
-		msg.array(out);
+	public static final Logger logger = LogManager.getLogger("EventEncoder");
 		
+	@Override
+	protected void encode(ChannelHandlerContext ctx, ClientMessageEvent msg, ByteBuf out) throws Exception {
+		// TODO Auto-generated method stub
+
+		try {
+			
+			msg.array(out);
+			
+//			msg.getMessage().release();
+		
+		} catch (Exception e) {
+						
+			e.printStackTrace();
+			
+			ctx.close();
+		}
+		
+//		System.err.println("	c 	e: " + COUNTER.getAndIncrement() + "	" + out.readableBytes());
 	}
+	
+	public static final AtomicInteger COUNTER = new AtomicInteger(0);
 	
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
@@ -22,4 +44,6 @@ public class EventEncoder extends MessageToByteEncoder<MessageEvent> {
         cause.printStackTrace();
         ctx.close();
     }
+
+
 }

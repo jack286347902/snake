@@ -1,8 +1,9 @@
 package test.disruptor;
 
+import org.snake.testmessage.event.MessageEvent;
+
 import com.lmax.disruptor.EventFactory;
 
-import abc.bcd.event.MessageEvent;
 
 public class DQEventFactory implements EventFactory<MessageEvent> {
 	

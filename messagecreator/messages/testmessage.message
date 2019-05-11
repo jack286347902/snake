@@ -1,8 +1,8 @@
 
-java_package = "abc.bcd.efg";
+java_package = "org.snake.testmessage.m1";
 group_cmd = 1000;	
 
-// item别想吴三桂顺中
+// item testing..........
 message Item {
 
 	required int32 id;		// id
@@ -16,17 +16,22 @@ message Item {
 	required bool 	isArray;				//
 	required string 	name;					//
 	
-	
-	repeated double 	l1;			// list
-	repeated float 		l2;			//
-	repeated int8 		l831;
-	repeated int16 		l31;	
-	repeated int32 		l3;			
-	repeated int64 		l4;			//
-	repeated bool 		l5;	
 	repeated string 	l6;		
 }
 
 message Empty {
+}
+
+message Small {
+
+	required int32 id;		// id
+	required int32 count;	/* count */
+	required double 	dd;						//	 double
+	required float 	ff;						//
+	required int8 	i8;					//
+	required int16 	i16;					//
+	required int32 	i32;					//
+	required int64 	i64;
+
 }
 

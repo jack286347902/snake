@@ -322,6 +322,24 @@ public class JavaMessageWriter {
 		return baseTypeMap;
 	}
 	
+	private static final Map<String, Integer> BASE_TYPE_MAP_LENGTH = createBaseTypeMapLength();
+	
+	private static Map<String, Integer> createBaseTypeMapLength() {
+		
+		Map<String, Integer> baseTypeMap = new HashMap<String, Integer>();
+	
+		baseTypeMap.put("double", 8);
+		baseTypeMap.put("float", 4);
+		baseTypeMap.put("int8", 1);
+		baseTypeMap.put("int16", 2);
+		baseTypeMap.put("int32", 4);
+		baseTypeMap.put("int64", 8);
+		baseTypeMap.put("bool", 1);
+		baseTypeMap.put("string", 2);
+	
+		return baseTypeMap;
+	}
+	
 	
 	private static final Map<String, String> BASE_BUFFER_READ_MAP = createBaseBufferReadMap();
 	
@@ -374,6 +392,7 @@ public class JavaMessageWriter {
 			  .append("import ")
 			  .append(parentPackage)
 			  .append(".Message;\r\n\r\n")
+			  .append("import java.io.UnsupportedEncodingException;\r\n\r\n")
 			  .append("import io.netty.buffer.ByteBuf;\r\n\r\n");
 		
 		Map<String, String> importMap = new HashMap<String, String>();
@@ -400,11 +419,19 @@ public class JavaMessageWriter {
 		StringBuilder parseBody = new StringBuilder();
 		
 		parseBody.append("\r\n\t@Override\r\n")
-				 .append("\tpublic void parse(ByteBuf buf) throws Exception {\r\n\r\n");
+				 .append("\tpublic void parse(ByteBuf buf) throws UnsupportedEncodingException {\r\n\r\n");
 		
 		StringBuilder arrayBody = new StringBuilder();
 		arrayBody.append("\r\n\t@Override\r\n")
-				 .append("\tpublic void array(ByteBuf buf) throws Exception {\r\n\r\n");
+				 .append("\tpublic void array(ByteBuf buf) throws UnsupportedEncodingException {\r\n\r\n");
+		
+//		arrayBody.append("\t\tint totalLen = getSize() + HEADER_LENGTH;\r\n\r\n")
+//				 .append("\t\tif(!buf.isWritable(totalLen))\r\n")
+//				 .append("\t\t\tbuf.ensureWritable(totalLen);\r\n\r\n")
+//				 .append("\t\tbuf.writeInt(totalLen);\r\n")
+//				 .append("\t\tbuf.writeShort(CMD_SHORT);\r\n\r\n");
+		
+		
 		
 		StringBuilder releaseBody = new StringBuilder();
 		releaseBody.append("\r\n\t@Override\r\n")
@@ -427,7 +454,16 @@ public class JavaMessageWriter {
 		 		.append("\t\t\t.append(\" refCnt = \")\r\n")
 		 		.append("\t\t\t.append(getRefCnt());");
 		
+		StringBuilder toSizeBody = new StringBuilder();
+		
+		toSizeBody.append("\r\n\t@Override\r\n")
+				  .append("\tpublic int getSize() {\r\n\r\n")
+				  .append("\t\tint size = SIZE;\r\n\r\n");
+		
+		int size = 0;
+		
 		for(MessageItem item: message.getItems()) {
+			
 			
 			String name = item.getItemName();
 			
@@ -452,59 +488,70 @@ public class JavaMessageWriter {
 					
 					type = item.getType();
 					
-					if(null == mg.getMessage(type)) {
-						
-						if(null == importMap.get(type)) {
-						
-							int found = 0;
-						
-							for(String fileName: mg.getImports()) {
-								
-								MessageGroup mgtemp = AllMessage.getInstance().getMgMap().get(fileName);
-								
-								if(null == mgtemp.getMessage(type))
-									continue;
-								else  {
-
-									++found;
-									
-									importMap.put(type, mgtemp.getJavaPackage());
-								}
-									
-								
-							}
-							
-							if(0 == found)
-								throw new Exception("not found message: " + type);
-							else if (found > 1)
-								throw new Exception("found message: " + type + " times: " + found);
-						
-						}
+//					if(null == mg.getMessage(type)) {
+//						
+//						if(null == importMap.get(type)) {
+//						
+//							int found = 0;
+//						
+//							for(String fileName: mg.getImports()) {
+//								
+//								MessageGroup mgtemp = AllMessage.getInstance().getMgMap().get(fileName);
+//								
+//								if(null == mgtemp.getMessage(type))
+//									continue;
+//								else  {
+//
+//									++found;
+//									
+//									importMap.put(type, mgtemp.getJavaPackage());
+//								}
+//									
+//								
+//							}
+//							
+//							if(0 == found)
+//								throw new Exception("not found message: " + type);
+//							else if (found > 1)
+//								throw new Exception("found message: " + type + " times: " + found);
+//						
+//						}
+//					
+//					}
 					
-					}
-					
+					addImports(type, item, mg, importMap);
 					
 					objectBody(type, name, body);
 					objectGetterAndSetter(type, name, upperName, getterAndSetter);
 					objectRetainBody(type, name, retainBody);
+					
+					objectReadBody(type, name, parseBody);
+					objectWriteBody(name, arrayBody);
 
 					objectReleaseBody(name, releaseBody);
 					objectReleaseClearBody(name, releaseClearBody);
 					
+					objectSize(name, toSizeBody);
 					
 					
 				} else {
 				
+					size += BASE_TYPE_MAP_LENGTH.get(item.getType());
 								
 					baseBody(type, name, body);					
 					baseGetterAndSetter(type, name, upperName, getterAndSetter);
 				
 					baseReadBody(item, name, parseBody);
 					baseWriteBody(item, name, arrayBody);
+					
+					baseReleaseClearBody(type, name, releaseClearBody);
 				
+					baseStringSize(type, name, toSizeBody);
 				}
 
 			} else if (REPEATED.equals(item.getOption())) {
+				
+				size +=2;
 				
 				String type = BASE_TYPE_MAP.get(item.getType());
 				
@@ -521,6 +568,8 @@ public class JavaMessageWriter {
 					
 					type = item.getType();
 					
+					addImports(type, item, mg, importMap);
+					
 					arrayObjectToString(type, name, toStringBody);
 					
 					objectArray(type, name, body);
@@ -529,10 +578,19 @@ public class JavaMessageWriter {
 					readObjectList(name, type, parseBody);
 					writeObjectList(name, type, arrayBody);
 					
+					objectRetainBodyList(name, type, retainBody);
+					
 					objectReleaseBodyList(name, type, releaseBody);
 					objectReleaseClearBodyList(name, type, releaseClearBody);
 					
+					objectArraySize(type, name, toSizeBody);
+					
 				} else {
+					
+					if(!type.equals("String")) {
+						
+						throw new Exception("unsupport array type: " + type);
+					}
 					
 					arrayToString(type, name, toStringBody);
 					
@@ -540,8 +598,11 @@ public class JavaMessageWriter {
 					baseArrayGetterAndSetter(type, name, upperName, getterAndSetter);
 										
 					readBaseList(name, type, parseBody);
-					writeBaseList(name, type, arrayBody);				
+					writeBaseList(name, type, arrayBody);
+					
+					baskReleaseClearBodyList(name, releaseClearBody);
 
+					baseArraySize(type, BASE_TYPE_MAP_LENGTH.get(item.getType()), name, toSizeBody);
 				}
 				
 			} else {
@@ -586,15 +647,59 @@ public class JavaMessageWriter {
 		out.write(retainBody.toString().getBytes("UTF-8"));
 		out.write(RETAIN_END.getBytes("UTF-8"));
 		
+		toSizeBody.append(TO_SIZE_END)
+		  .append(size)
+		  .append(";\r\n\r\n");
+		out.write(toSizeBody.toString().getBytes("UTF-8"));
+		
 		out.write(toStringBody.toString().getBytes("UTF-8"));
 		out.write(TO_STRING_END.getBytes("UTF-8"));
 
-		
+
 		out.flush();
 		out.close();
 	}
 	
+	private void addImports(String type, MessageItem item, MessageGroup mg,
+			Map<String, String> importMap) throws Exception {
+		
+			
+		if(null == mg.getMessage(type)) {
+			
+			if(null == importMap.get(type)) {
+			
+				int found = 0;
+			
+				for(String fileName: mg.getImports()) {
+					
+					MessageGroup mgtemp = AllMessage.getInstance().getMgMap().get(fileName);
+					
+					if(null == mgtemp.getMessage(type))
+						continue;
+					else  {
+
+						++found;
+						
+						importMap.put(type, mgtemp.getJavaPackage());
+					}
+						
+					
+				}
+				
+				if(0 == found)
+					throw new Exception("not found message: " + type);
+				else if (found > 1)
+					throw new Exception("found message: " + type + " times: " + found);
+			
+			}
+		}
+
+	}
 	
+	public static final String TO_SIZE_END = "\r\n\t\t"
+			+ "return size;\r\n"
+			+ "\r\n\t}\r\n\r\n"
+			+ "\tprivate static final int SIZE = ";
 	
 	public static final String TO_STRING_END = "\r\n\t\t"
 			+ "return builder.toString();\r\n"
@@ -604,13 +709,74 @@ public class JavaMessageWriter {
 			+ "MESSAGE_POOL.returnMessage(this);\r\n"
 			+ "\r\n\t\t}\r\n";
 	public static final String PARSE_END = "\r\n\t}\r\n";
-	public static final String ARRAY_END = "\r\n\t\t"
-			+ "release();\r\n"
+	public static final String ARRAY_END = "\r\n"
+//			+ "release();\r\n"
 			+ "\t}\r\n";
 	
 	public static final String RELEASE_END = "\r\n\t}\r\n";
 	
 	public static final String RETAIN_END = "\r\n\t}\r\n";
+	
+	private void baseStringSize(String type, String name, StringBuilder builder) {
+		
+		if(type.equals("String")) {
+			
+			builder.append("\t\tif(null !=")
+				   .append(name)
+				   .append(")\r\n")
+				   .append("\t\t\tsize += ")
+				   .append(name)
+				   .append(".length();\r\n\r\n");
+			
+		}
+	}
+	
+	private void objectSize(String name, StringBuilder builder) {
+		
+		builder.append("\t\tsize += ")
+			   .append(name)
+			   .append(".getSize();\r\n\r\n");
+		
+	}
+	
+	private void baseArraySize(String type, int length, String name, StringBuilder builder) {
+		
+		if(type.equals("String")) {
+			
+			builder.append("\r\n\t\tif(null != ")
+			   .append(name)
+			   .append(")\r\n")
+			   .append("\t\t\tfor(")
+			   .append(type)
+			   .append(" temp: ")
+			   .append(name)
+			   .append(")\r\n")
+			   .append("\t\t\t\tsize += temp.length() + 2;\r\n\r\n");
+			
+		} else {
+		
+			builder.append("\t\tif(null != ")
+				   .append(name)
+				   .append(")\r\n")
+				   .append("\t\t\tsize += ")
+			   	   .append(name)
+			   	   .append(".length * ")
+			   	   .append(length)
+			   	   .append(";\r\n");
+		
+		}
+	}
+	
+	private void objectArraySize(String type, String name, StringBuilder builder) {
+		
+		builder.append("\r\n\t\tfor(")
+			   .append(type)
+			   .append(" temp: ")
+			   .append(name)
+			   .append(")\r\n")
+			   .append("\t\t\tsize += temp.getSize();\r\n\r\n");
+
+	}
 	
 	private void baseToString(String name, StringBuilder builder) {
 	
@@ -623,16 +789,16 @@ public class JavaMessageWriter {
 	
 	}
 	
-	private void arraySizeToString(String name, StringBuilder builder) {
-		
-		builder.append("\r\n\t\tbuilder.append(\"")
-		.append(name)
-		.append(" size = \")\r\n")
-		.append("\t\t\t.append(")
-		.append(name)
-		.append(".size());\r\n\r\n");
-
-	}
+//	private void arraySizeToString(String name, StringBuilder builder) {
+//		
+//		builder.append("\r\n\t\tbuilder.append(\"")
+//		.append(name)
+//		.append(" size = \")\r\n")
+//		.append("\t\t\t.append(")
+//		.append(name)
+//		.append(".size());\r\n\r\n");
+//
+//	}
 
 	private void arrayToString(String type, String name, StringBuilder builder) {
 		
@@ -664,21 +830,30 @@ public class JavaMessageWriter {
 	
 	private void arrayObjectToString(String type, String name, StringBuilder builder) {
 		
-		builder.append("\r\n\t\tbuilder.append(\" ")
+		builder.append("\r\n\t\tif(null == ")
+		   .append(name)
+		   .append(")\r\n")
+		   .append("\t\t\tbuilder.append(\" ")
+		   .append(name)
+		   .append(" = null \");\r\n")
+		   .append("\t\telse {\r\n\r\n");
+		
+		builder.append("\t\t\tbuilder.append(\" ")
 		.append(name)
 		.append(" size = \")\r\n")
-		.append("\t\t\t.append(")
+		.append("\t\t\t\t.append(")
 		.append(name)
 		.append(".size());\r\n\r\n");
 
-		builder.append("\t\tbuilder.append(\" {\");\r\n")
-		.append("\t\tfor(")
+		builder.append("\t\t\tbuilder.append(\" {\");\r\n")
+		.append("\t\t\tfor(")
 		.append(type)
 		.append(" temp: ")
 		.append(name)
 		.append(")\r\n")
-		.append("\t\t\tbuilder.append(temp).append(\", \");\r\n")
-		.append("\t\tbuilder.append(\"}\");\r\n\r\n");
+		.append("\t\t\t\tbuilder.append(temp).append(\", \");\r\n")
+		.append("\t\t\tbuilder.append(\"}\");\r\n\r\n")
+		.append("\t\t}\r\n\r\n");
 	}
 	
 
@@ -717,6 +892,30 @@ public class JavaMessageWriter {
 			   .append(name)
 			   .append(";\r\n")
 			   .append("\t}\r\n");
+	}
+	
+	private void objectReadBody(String type, String name, StringBuilder builder) {
+		
+//		builder.append("\t\t")
+//		   .append(name)
+//		   .append(" = (")
+//		   .append(type)
+//		   .append(")MESSAGE_POOL.borrowMessage(")
+//		   .append(type)
+//		   .append(".CMD_INTEGER);\r\n"); 
+		
+		builder.append("\t\t")
+				 .append(name)
+				 .append(".parse(buf)")
+				 .append(";\r\n");
+	}
+	
+	private void objectWriteBody(String name, StringBuilder builder) {
+		
+		builder.append("\t\t")
+		 .append(name)
+		 .append(".array(buf)")
+		 .append(";\r\n");
 	}
 
 
@@ -778,11 +977,43 @@ public class JavaMessageWriter {
 			   .append(name)
 			   .append(";\r\n")
 			   .append("\t}\r\n");
+		
+		
+//		builder.append("\tpublic ")
+//		   .append(type)
+//		   .append(" get")
+//		   .append(upperName)
+//		   .append("() {\r\n")
+//		   .append("\t\treturn ")
+//		   .append(name)
+//		   .append(";\r\n")
+//		   .append("\t}")
+//		   .append("\r\n\tpublic void set")
+//		   .append(upperName)
+//		   .append("(")
+//		   .append(type)
+//		   .append(" ")
+//		   .append(name)
+//		   .append(") {\r\n")
+//		   .append("\t\tthis.")
+//		   .append(name)
+//		   .append(" = ")
+//		   .append(name)
+//		   .append(";\r\n")
+//		   .append("\t}\r\n");
 	
 	}
 	
 	private void objectRetainBody(String type, String name, StringBuilder builder) {
 	
+//		builder.append("\t\tif(null != ")
+//		   .append(name)
+//		   .append(")\r\n");
+//		builder.append("\t\t\t")
+//		   .append(name)
+//		   .append(".retain();\r\n\r\n");
+		
+		
 		builder.append("\t\tif(null == ")
 			   .append(name)
 			   .append(")\r\n")
@@ -814,6 +1045,13 @@ public class JavaMessageWriter {
 				.append(" = null;\r\n");
 	}
 
+	private void baseReleaseClearBody(String type, String name, StringBuilder builder) {
+		
+		if(type.equals("String"))
+			builder.append("\t\t\t")
+					.append(name)
+					.append(" = null;\r\n");
+	}
 	
 	private void objectArray(String type, String name, StringBuilder builder) {
 		
@@ -953,6 +1191,26 @@ public class JavaMessageWriter {
 		   .append(", buf);\r\n");
 	}
 	
+	private void objectRetainBodyList(String name, String type, StringBuilder builder) {
+		
+		String iterName = name + "Iter";
+		
+		builder.append("\r\n\t\tIterator<")
+			   .append(type)
+			   .append("> ")
+			   .append(iterName)
+			   .append(" = ")
+			   .append(name)
+			   .append(".iterator();\r\n")
+			   .append("\t\twhile(")
+			   .append(iterName)
+			   .append(".hasNext())\r\n")
+			   .append("\t\t\t")
+			   .append(iterName)
+			   .append(".next().retain();\r\n\r\n");
+	
+	}
+	
 	private void objectReleaseBodyList(String name, String type, StringBuilder builder) {
 		
 		String iterName = name + "Iter";
@@ -973,6 +1231,12 @@ public class JavaMessageWriter {
 	
 	}
 	
+	private void baskReleaseClearBodyList(String name, StringBuilder builder) {
+		builder.append("\r\n\t\t\t")
+			   .append(name)
+			   .append(" = null;\r\n");
+	}
+	
 	private void objectReleaseClearBodyList(String name, String type, StringBuilder builder) {
 
 		String iterName = name + "Iter";
@@ -987,7 +1251,7 @@ public class JavaMessageWriter {
 			   .append(".hasNext()) {\r\n")
 			   .append("\t\t\t\t")
 			   .append(iterName)
-			   .append(".next().release();\r\n")
+			   .append(".next();\r\n")
 			   .append("\t\t\t\t")
 			   .append(iterName)
 			   .append(".remove();\r\n")

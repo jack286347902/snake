@@ -2,8 +2,8 @@ package test.server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.snake.testmessage.pool.MessagePool;
 
-import abc.bcd.pool.MessagePool;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -43,8 +43,9 @@ public class Server extends Thread {
     
     public static void main(String[] args) throws Exception {
     	
-    	Server.getInstance().start();    	
-    	printObjectCount();
+    	Server.getInstance().start();   
+    	
+//    	printObjectCount();
     }
     
     public static void printObjectCount() {
@@ -80,8 +81,8 @@ public class Server extends Thread {
 
         try {
         	
-        	if(IS_DEBUG)
-        		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
+//        	if(IS_DEBUG)
+//        		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         	
             ServerBootstrap bootstrap = new ServerBootstrap();
             

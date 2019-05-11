@@ -1,0 +1,24 @@
+import "testmessage.message"
+import "testmessage2.message"
+java_package = org.snake.testmessage.m3
+group_cmd = 3000;	
+
+//SecondRequest
+/*
+ * SecondRequest testing..........
+ */
+message SecondRequest {
+
+	required double 	add;						//	 double
+	required float 	aff;						//
+	required int32 	ai32;					//
+	required int64 	ai64;					//
+	required bool 	aisArray;				//
+	required string 	aname;					//
+	required Item		aitem;	
+			
+	repeated string 	al6;			
+	repeated Item		al7;
+	repeated FirstRequest fRequest;			
+
+}

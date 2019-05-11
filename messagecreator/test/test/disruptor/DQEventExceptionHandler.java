@@ -2,10 +2,9 @@ package test.disruptor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.snake.testmessage.event.MessageEvent;
 
 import com.lmax.disruptor.ExceptionHandler;
-
-import abc.bcd.event.MessageEvent;
 
 public class DQEventExceptionHandler implements ExceptionHandler<MessageEvent> {
 	

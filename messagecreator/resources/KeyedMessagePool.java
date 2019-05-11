@@ -1,6 +1,6 @@
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -35,8 +35,8 @@ public final class KeyedMessagePool {
     
     
     // cmd - list map
-    private final Map<Integer, ConcurrentLinkedDeque<Message>> poolMap =
-            new ConcurrentHashMap<Integer, ConcurrentLinkedDeque<Message>>(POOL_MAP_LENGTH); 
+    private final Map<Integer, ConcurrentLinkedQueue<Message>> poolMap =
+            new ConcurrentHashMap<Integer, ConcurrentLinkedQueue<Message>>(POOL_MAP_LENGTH); 
     
     private final ReadWriteLock cmdLock = new ReentrantReadWriteLock(true);
     
@@ -49,7 +49,7 @@ public final class KeyedMessagePool {
     private void register(final Integer cmd) {
     	
     	Lock lock = cmdLock.readLock();
-    	ConcurrentLinkedDeque<Message> deque = null;
+    	ConcurrentLinkedQueue<Message> deque = null;
     	
     	try {
     		
@@ -65,7 +65,7 @@ public final class KeyedMessagePool {
                  
                  if(null == deque) {
                 	 
-                	 deque = new ConcurrentLinkedDeque<Message>();
+                	 deque = new ConcurrentLinkedQueue<Message>();
                 	 
                 	 poolMap.put(cmd, deque);
                 	 
@@ -92,12 +92,12 @@ public final class KeyedMessagePool {
 	public Message borrowMessage(final Integer cmd) {
 		// TODO Auto-generated method stub
 		
-		ConcurrentLinkedDeque<Message> deque = poolMap.get(cmd);
+		ConcurrentLinkedQueue<Message> deque = poolMap.get(cmd);
 		
 		if(null == deque)
 			return null;
 		
-		Message	message = deque.pollFirst();
+		Message	message = deque.poll();
 		
 		if(null == message) 				
 			message = KeyedMessageFactory.create(cmd);
@@ -117,10 +117,10 @@ public final class KeyedMessagePool {
 	public void returnMessage(final Message message) {
 		// TODO Auto-generated method stub
 		
-		final ConcurrentLinkedDeque<Message> deque = poolMap.get(message.getCmdInteger());
+		final ConcurrentLinkedQueue<Message> deque = poolMap.get(message.getCmdInteger());
 		
 		if(null != deque)
-			deque.addFirst(message);
+			deque.offer(message);
 		
 	}
 	
@@ -128,7 +128,7 @@ public final class KeyedMessagePool {
 	public void printObjectCount() {
 
 		
-		for(Map.Entry<Integer, ConcurrentLinkedDeque<Message>> entry: poolMap.entrySet())
+		for(Map.Entry<Integer, ConcurrentLinkedQueue<Message>> entry: poolMap.entrySet())
 			System.err.println("object count: " + entry.getValue().size() + " cmd: " + entry.getKey());
 	
 

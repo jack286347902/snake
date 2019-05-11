@@ -1,39 +1,41 @@
 
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public abstract class Message implements Cmd, ReferenceCount {
-
+	
 	protected static final KeyedMessagePool MESSAGE_POOL 
 							= KeyedMessagePool.getInstance();
 	
-
+	
+	public abstract int getSize();
 
 	/*
 	 * parse message from ByteBuf
 	 * 
 	 * @param ByteBuf PooledByteBufAllocator.directBuffer()
 	 */
-	public abstract void parse(ByteBuf buf) throws Exception;
+	public abstract void parse(ByteBuf buf) throws UnsupportedEncodingException;
 
 
 	/*
-	 * convert messsage to ByteBuf, auto release() message
+	 * convert messsage to ByteBuf
 	 * 
 	 * @param ByteBuf PooledByteBufAllocator.directBuffer()
 	 */
-	public abstract void array(ByteBuf buf)  throws Exception;
+	public abstract void array(ByteBuf buf)  throws UnsupportedEncodingException;
 	
 	/*
-	 * convert message to ByteBuf
+	 * convert messsage to ByteBuf
 	 * 
-	 * @return Unpooled.directBuffer()
+	 * @return ByteBuf Unpooled.directBuffer(getSize())
 	 */
-	public ByteBuf array() throws Exception {
+	public ByteBuf array() throws UnsupportedEncodingException {
 		
-		ByteBuf buf = Unpooled.directBuffer();
+		ByteBuf buf = Unpooled.directBuffer(getSize());
 		
 		array(buf);
 		
@@ -41,7 +43,6 @@ public abstract class Message implements Cmd, ReferenceCount {
 		
 	}
 	
-
 	
 	private final AtomicInteger refCnt = new AtomicInteger(0);
 	
@@ -56,7 +57,7 @@ public abstract class Message implements Cmd, ReferenceCount {
 	 * refCnt >= 0
 	 */
 	@Override
-	public synchronized void release() {
+	public void release() {
 		
 		if(refCnt.get() > 0) {
 			
@@ -88,18 +89,25 @@ public abstract class Message implements Cmd, ReferenceCount {
 	protected abstract void retainMessage();
 
 	
-	protected String readString(ByteBuf buf) throws Exception {
+	protected String readString(ByteBuf buf) throws UnsupportedEncodingException {
 		
 		short len = buf.readShort();
+		
+		if(0 == len)
+			return null;
+		
 		byte[] array  = new byte[len];
 		buf.readBytes(array);
 		
 		return new String(array, "UTF-8");
 	}
 	
-	protected String[] readStringArray(ByteBuf buf) throws Exception {
+	protected String[] readStringArray(ByteBuf buf) throws UnsupportedEncodingException {
 		
 		short len = buf.readShort();
+		
+		if(0 == len)
+			return null;
 		
 		String[] result = new String[len];
 		for(int i = 0; i < len; ++i) {
@@ -109,7 +117,13 @@ public abstract class Message implements Cmd, ReferenceCount {
 		return result;
 	}
 	
-	protected void writeString(String s, ByteBuf buf) throws Exception {
+	protected void writeString(String s, ByteBuf buf) throws UnsupportedEncodingException {
+		
+		if(null == s) {
+			
+			buf.writeShort(0);
+			return;
+		}
 		
 		int len = s.length();
 		buf.writeShort(len);
@@ -117,7 +131,7 @@ public abstract class Message implements Cmd, ReferenceCount {
 			buf.writeBytes(s.getBytes("UTF-8"));
 	}
 	
-	protected void writeStringArray(String[] array, ByteBuf buf) throws Exception {
+	protected void writeStringArray(String[] array, ByteBuf buf) throws UnsupportedEncodingException {
 		
 		if(null == array) {
 			
@@ -132,187 +146,5 @@ public abstract class Message implements Cmd, ReferenceCount {
 		
 	}
 	
-	protected boolean[] readBooleanArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-		
-		boolean[] result = new boolean[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readBoolean();
-		}
-		
-		return result;
-	}
-	
-	protected void writeBooleanArray(boolean[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		for(boolean value: array)
-			buf.writeBoolean(value);
-		
-	}
-	
-	protected byte[] readByteArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-		
-		byte[] result = new byte[len];
-		
-		if(len > 0)
-			buf.readBytes(result);
-		
-		return result;
-	}
-	
-	protected void writeByteArray(byte[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		
-		if(array.length > 0)
-			buf.writeBytes(array);
-		
-	}
-	
-	protected short[] readShortArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-		
-		short[] result = new short[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readShort();
-		}
-		
-		return result;
-	}
-	
-	protected void writeShortArray(short[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		for(short value: array)
-			buf.writeShort(value);
-		
-	}
-	
-	protected int[] readIntArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-		
-		int[] result = new int[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readInt();
-		}
-		
-		return result;
-	}
-	
-	protected void writeIntArray(int[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		for(int value: array)
-			buf.writeInt(value);
-		
-	}
-	
-	protected long[] readLongArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-		
-		long[] result = new long[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readLong();
-		}
-		
-		return result;
-	}
-	
-	protected void writeLongArray(long[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		for(long value: array)
-			buf.writeLong(value);
-		
-	}
-	
-	protected float[] readFloatArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
 
-		float[] result = new float[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readFloat();
-		}
-		
-		return result;
-	}
-	
-	protected void writeFloatArray(float[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-		
-		buf.writeShort(array.length);
-		for(float value: array)
-			buf.writeFloat(value);
-		
-	}
-	
-	protected double[] readDoubleArray(ByteBuf buf) throws Exception {
-		
-		short len = buf.readShort();
-
-		double[] result = new double[len];
-		for(int i = 0; i < len; ++i) {
-			result[i] = buf.readDouble();
-		}
-		
-		return result;
-	}
-	
-	protected void writeDoubleArray(double[] array, ByteBuf buf) throws Exception {
-		
-		if(null == array) {
-			
-			buf.writeShort(0);
-			return;
-		}
-			
-		
-		buf.writeShort(array.length);
-		for(double value: array)
-			buf.writeDouble(value);
-		
-	}
 }
