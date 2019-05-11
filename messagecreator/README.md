@@ -11,12 +11,19 @@ MessageCreator a message pool, how to
 
 
 		required double 	dd;				double
+		
 		required float 	ff;					float
+		
 		required int8 	i8;					byte/char
+		
 		required int16 	i16;				short
+		
 		required int32 	i32;				int
+		
 		required int64 	i64;				long
+		
 		required bool 	isArray;			boolean
+		
 		required string 	name;			String
 		
 		repeated string 	l6;		 		String[]
@@ -25,8 +32,11 @@ MessageCreator a message pool, how to
 	3. other options
 	
 		import "testmessage.message"					import objects from file, can has multiple.
+		
 		import "testmessage2.message"					import objects from file, can has multiple.
+		
 		java_package = org.snake.testmessage.m2			the package of the messages defined in this file
+		
 		group_cmd = 2000;								unique cmd start of all file, every cmd is unique
 		
 	4. some important point
