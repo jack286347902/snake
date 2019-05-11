@@ -7,26 +7,26 @@ MessageCreator a message pool, how to
 	1. base type
 	2. self defined object type based on base type
 
-		message base type			to			java type
+		message base type-------------to------------java type
 
 
-		required double 	dd;                       double
+		required double 	dd;    ---------------------- double
 		
-		required float 	ff;	                          float
+		required float 	ff;	----------------------        float
 		
-		required int8 	i8;	                          byte/char
+		required int8 	i8;	----------------------        byte/char
 		
-		required int16 	i16;                          short
+		required int16 	i16;----------------------        short
 		
-		required int32 	i32;                          int
+		required int32 	i32;----------------------        int
 		
-		required int64 	i64;                          long
+		required int64 	i64;----------------------        long
 		
-		required bool 	isArray;                      boolean
+		required bool 	isArray;----------------------    boolean
 		
-		required string 	name;                     String
+		required string 	name;----------------------   String
 		
-		repeated string 	l6;                       String[]
+		repeated string 	l6;----------------------     String[]
 	
 	
 	3. other options
