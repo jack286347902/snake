@@ -1,4 +1,6 @@
-# snake a netty nio game server framework.
+# MessageCreator a java object pool based on Netty
+
+专门为Netty做优化，服务器端零拷贝，消息池加Netty占用内存不超过2G，比Probuf性能提高至少一倍
 
 MessageCreator 是一个Java对象池，自动生成对象，用户要手动调用release()来归还对象到对象池
 

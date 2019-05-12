@@ -1,4 +1,9 @@
-# snake a netty nio game server framework.
+# MessageCreator a java object pool based on Netty
+
+optimized for Netty, serverside ZeroCopy, memory used by message pool and Netty less than 2G,.
+
+Performance improvement at least doubled than ProBuffer on server side.
+
 
 MessageCreator a message pool, how to
 
