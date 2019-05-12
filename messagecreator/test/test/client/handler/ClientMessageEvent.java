@@ -205,32 +205,32 @@ public class ClientMessageEvent {
 		
 		message.array(buf);
 		
-//		System.err.println("	c	a " + COUNTER2.getAndIncrement() 
-//		+ "	" + message.getSize() + " " + buf.readableBytes());
-//			
+		System.err.println("	c	a " + COUNTER2.getAndIncrement() 
+		+ "	" + message.getSize() + " " + buf.readableBytes());
+			
 		
 		message.release();
 	}
 	
 	
-	public ByteBuf array() throws UnsupportedEncodingException {
-		// TODO Auto-generated method stub
-		
-		
-
-		int totalLen = message.getSize() + HEADER_LENGTH;
-		
-		ByteBuf buf = Unpooled.directBuffer(totalLen);
-		
-		buf.writeInt(totalLen);
-		buf.writeShort(message.getCmdShort());
-		
-		message.array(buf);
-
-		message.release();
-		
-		return buf;
-	}
+//	public ByteBuf array() throws UnsupportedEncodingException {
+//		// TODO Auto-generated method stub
+//		
+//		
+//
+//		int totalLen = message.getSize() + HEADER_LENGTH;
+//		
+//		ByteBuf buf = Unpooled.directBuffer(totalLen);
+//		
+//		buf.writeInt(totalLen);
+//		buf.writeShort(message.getCmdShort());
+//		
+//		message.array(buf);
+//
+//		message.release();
+//		
+//		return buf;
+//	}
 	
 	
 	public static final AtomicInteger COUNTER2 = new AtomicInteger(0);

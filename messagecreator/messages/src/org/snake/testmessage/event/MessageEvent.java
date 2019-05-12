@@ -112,12 +112,13 @@ public class MessageEvent {
 		// TODO Auto-generated method stub
 		
 		
-		// not any lock
-		// this line to next 5 nonempty line must here, 
+		// this line to next 5 unempty line must here, 
 		// can't move to message.array(buf)
-		// if moved into, message.getSize() get wrong size
 		// why??????????????????????????????????????
-
+		// 
+		// cacl total length if in message.array(buf), 
+		// every inner message recacl it's length
+		// length changes again and again
 		int totalLen = message.getSize() + HEADER_LENGTH;
 		
 		if(!buf.isWritable(totalLen))
@@ -128,9 +129,13 @@ public class MessageEvent {
 		
 		message.array(buf);
 
-		// next nonempty line must here, 
+		// next unempty line must here, 
 		// can't move to message.array(buf)
 		// why??????????????????????????????????????
+		
+		
+		// if calls int message.array(buf)
+		// every inner message calls it's release
 		message.release();
 		
 

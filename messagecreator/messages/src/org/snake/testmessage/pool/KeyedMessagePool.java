@@ -123,10 +123,7 @@ public final class KeyedMessagePool {
 	public void returnMessage(final Message message) {
 		// TODO Auto-generated method stub
 		
-		final ConcurrentLinkedQueue<Message> deque = poolMap.get(message.getCmdInteger());
-		
-		if(null != deque)
-			deque.offer(message);
+		poolMap.get(message.getCmdInteger()).offer(message);
 		
 	}
 	
