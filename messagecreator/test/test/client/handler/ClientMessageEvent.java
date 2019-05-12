@@ -70,11 +70,11 @@ public class ClientMessageEvent {
 		
 		message.parse(buf);
 			
-		System.err.println("	c	p 	" + COUNTER.getAndIncrement());
-//		+ "	" + message.getSize() + " " + size);
+		System.err.println("	c	p 	" + COUNTER.getAndIncrement()
+				+ "	" + message.getSize() + " " + size);
 
 
-//		print();
+		print();
 	}
 	
 	

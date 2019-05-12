@@ -1,13 +1,14 @@
 # snake a netty nio game server framework.
 
-MessageCreator a message pool, how to
+MessageCreator 是一个Java对象池，自动生成对象，用户要手动调用release()来归还对象到对象池
 
-1. support types: 
+
+1. 支持的类型: 
 	
-	1. base type
-	2. self defined object type based on base type
+	1. 基本类型
+	2. 自定义类型
 
-		message base type-------------to------------java type
+		消息类型-------------to------------java 类型
 
 
 		required double 	dd;    ---------------------- double
@@ -29,40 +30,43 @@ MessageCreator a message pool, how to
 		repeated string 	l6;----------------------     String[]
 	
 	
-	3. other options
+	3. 其他选项
 	
-		import "testmessage.message"					import objects from file, can has multiple.
+		import "testmessage.message"					引入testmessage.message文件中定义的对象，可以有多个引入文件
 		
-		import "testmessage2.message"					import objects from file, can has multiple.
+		import "testmessage2.message"					引入testmessage2.message文件中定义的对象，可以有多个引入文件
 		
-		java_package = org.snake.testmessage.m2			the package of the messages defined in this file
+		java_package = org.snake.testmessage.m2			本文件中对象所在的包
 		
-		group_cmd = 2000;								unique cmd start of all file, every cmd is unique
+		group_cmd = 2000;								本文件中的组消息CMD开始，文件中的消息CMD由组CMD自动增长，
+														所有消息的CMD都是唯一的，每个组的CMD不能一样，同时还要有足够的区间
+														来使消息的CMD不重复
 		
-	4. some important point
+	4. 关键点
 	
-		such as in FirstRequest:
+		比如：FirstRequest:
 		
-		only has getter, no setter, cause aitem will be instanced in retainMessage();
+		// 消息中的消息对象只有getter, 没有setter, 因为aitem在retainMessage()中实例化
 		private Item aitem = null; 
 		
-		final and not setter: created as message FirstRequest created, life cycle equal to FirstRequest
+		// 		repeated Item 	al7;
+		// 消息对象数组，生成为final List<Item>类型，生命周期和FirstRequest一样
 		private final List<Item> al7 = new LinkedList<Item>();
 		
 		
-2. how to create messages:
+2. 生成消息:
 
 		org.jack.messagecreator.App.main()
 		
-		arg[0] src dir of message define file
-		arg[1] dest of messages created
+		arg[0] 消息定义文件的路径
+		arg[1] 生成对象文件路径 
 		
-		if arg[0] not provided, uses current dir
-		if arg[1] not provided, uses src dir + "\\src"
+		如果 arg[0] 没有提供，则使用当前路径 
+		如果 arg[1] 没有提供，，则使用当前路径 + "\\src"
 		
-3. get pooled messsage
+3. 得到池化对象
 
-	1. parse from netty with zero copy
+	1. parse()函数从Netty中生成，使用Netty的零拷贝
 
 		buf.skipBytes(CMD_OFFSET);
 		short cmd = buf.readShort();
@@ -71,7 +75,7 @@ MessageCreator a message pool, how to
 		
 		message.parse(buf);
 		
-	2. write to netty with zero copy
+	2. array()函数写到Netty，使用Netty的零拷贝
 	
 		// not use any lock
 		// this line to next 5 nonempty line must here, 
@@ -95,7 +99,7 @@ MessageCreator a message pool, how to
 		message.release();
 		
 		
-	3. get message and write to netty
+	3. MessagePool.borrowMessage()生成对象，并写到Netty中
 	
 	
 		    public Empty createEmptyMessage() {

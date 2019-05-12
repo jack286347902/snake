@@ -6,6 +6,8 @@ import org.snake.testmessage.event.MessageEvent;
 
 import com.lmax.disruptor.EventHandler;
 
+import test.client.FillEvent;
+
 
 public class DQEventHandler implements EventHandler<MessageEvent> {
 	
@@ -13,7 +15,9 @@ public class DQEventHandler implements EventHandler<MessageEvent> {
 	@Override
 	public void onEvent(MessageEvent event, long sequence, boolean endOfBatch) throws Exception {
     	
-		event.getChannel().writeAndFlush(event);
+		new FillEvent().process(event);
+		
+//		event.getChannel().writeAndFlush(event);
 				
 	}
 	
