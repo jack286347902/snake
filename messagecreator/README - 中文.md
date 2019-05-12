@@ -82,7 +82,10 @@ MessageCreator 是一个Java对象池，自动生成对象，用户要手动调�
 		// can't move to message.array(buf)
 		// if moved into, message.getSize() get wrong size
 		// why??????????????????????????????????????
-
+		// 
+		// cacl total length if in message.array(buf), 
+		// every inner message recacl it's length
+		// length changes again and again
 		int totalLen = message.getSize() + HEADER_LENGTH;
 		
 		if(!buf.isWritable(totalLen))
@@ -96,6 +99,9 @@ MessageCreator 是一个Java对象池，自动生成对象，用户要手动调�
 		// next nonempty line must here, 
 		// can't move to message.array(buf)
 		// why??????????????????????????????????????
+		
+		// if calls int message.array(buf)
+		// every inner message calls it's release
 		message.release();
 		
 		
