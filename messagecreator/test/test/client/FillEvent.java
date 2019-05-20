@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.snake.testmessage.Message;
 import org.snake.testmessage.event.MessageEvent;
+import org.snake.testmessage.login.ClientLogin;
 import org.snake.testmessage.m1.Empty;
 import org.snake.testmessage.m1.Item;
 import org.snake.testmessage.m1.Small;
@@ -12,6 +13,8 @@ import org.snake.testmessage.m3.SecondRequest;
 import org.snake.testmessage.pool.MessagePool;
 
 public class FillEvent {
+	
+
 
 	  public FirstRequest createFirstRequestMessage(int i32) {
 	    	
@@ -158,7 +161,7 @@ public class FillEvent {
 	    	
 	    	List<FirstRequest> fRequest = message.getFRequest();
 	    	
-	    	for(int i = 0; i < 2; ++i) {    		
+	    	for(int i = 0; i < 1; ++i) {    		
 	    		fRequest.add(createFirstRequestMessage(i32++));
 	    	}
 	    	

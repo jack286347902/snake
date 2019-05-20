@@ -55,7 +55,7 @@ public class DQEventProcessor {
     }
     
 	// 写入事件
-    public void enqueue(Channel channel, long uuid, ByteBuf buf) throws Exception {
+    public void enqueue(Channel channel, ByteBuf buf) throws Exception {
     	
     	if(null != ringBuffer) {
     		
@@ -66,8 +66,7 @@ public class DQEventProcessor {
 	        	MessageEvent event = ringBuffer.get(sequence); 
 	        	
 	        	event.setChannel(channel);
-	        	event.setUuid(uuid);
-	        	event.parse(buf);
+	        	event.parseFromClient(buf);
 	            
 	        } finally {
 	        	

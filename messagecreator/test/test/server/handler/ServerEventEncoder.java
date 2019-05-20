@@ -1,8 +1,6 @@
 package test.server.handler;
 
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.snake.testmessage.event.MessageEvent;
 
 import io.netty.buffer.ByteBuf;
@@ -18,9 +16,7 @@ public class ServerEventEncoder extends MessageToByteEncoder<MessageEvent> {
 		try {
 			
 			// default 256 bytes
-			msg.array(out);
-		
-//			msg.getMessage().release();
+			msg.arrayToClient(ctx, out);
 		
 		} catch (Exception e) {
 			
@@ -30,8 +26,6 @@ public class ServerEventEncoder extends MessageToByteEncoder<MessageEvent> {
 		}
 	}
 	
-	public static final AtomicInteger COUNTER = new AtomicInteger(0);
-
 	
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

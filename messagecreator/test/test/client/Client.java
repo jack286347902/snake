@@ -1,24 +1,18 @@
 package test.client;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 
-import org.snake.testmessage.m1.Empty;
-import org.snake.testmessage.m1.Item;
-import org.snake.testmessage.m1.Small;
-import org.snake.testmessage.m2.FirstRequest;
-import org.snake.testmessage.m3.SecondRequest;
+import org.snake.testmessage.login.ClientLogin;
 import org.snake.testmessage.pool.MessagePool;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import test.client.handler.ClientMessageEvent;
+import test.client.handler.crypt.Crypt;
 
 
 public class Client extends Thread {
@@ -26,6 +20,8 @@ public class Client extends Thread {
 	public static Client INSTANCE = null;
     
 	public EventLoopGroup group = null;
+
+	
 
 	
 	private Client() {
@@ -49,15 +45,41 @@ public class Client extends Thread {
     	
     }
     
+	private static final Crypt crypt = new Crypt("dsfklsdfjkl390890238".getBytes());
+	
+	public static Crypt getCrypt() {
+		return crypt;
+	}
 
-    
+	public ClientLogin createClientLogin() {
+		
+		ClientLogin clientLogin = (ClientLogin)MessagePool.borrowMessage(ClientLogin.CMD_INTEGER);
+		
+		clientLogin.setToken("dsfklsdfjkl390890238");
+		
+		return clientLogin;
+	}
   
 	private void writeMessage(Channel channel) throws UnsupportedEncodingException {
 		
 		FillEvent fillEvent = new FillEvent();
 		
+		ClientMessageEvent event0 = new ClientMessageEvent();
+		
+    	event0.setMessage(createClientLogin());
+    	
+    	channel.writeAndFlush(event0);
+		
+
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
 		for(int i = 0; i < 10000; ++i) {
-			
 			
 	    	ClientMessageEvent event = new ClientMessageEvent();
 			

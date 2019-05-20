@@ -10,6 +10,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.util.ReferenceCountUtil;
+import test.client.ClientMessageEvent;
 
 public class EventEncoder extends MessageToByteEncoder<ClientMessageEvent> {
 
@@ -21,9 +22,12 @@ public class EventEncoder extends MessageToByteEncoder<ClientMessageEvent> {
 
 		try {
 			
-			msg.array(out);
+			ByteBuf buf = msg.array(ctx);
 			
-//			msg.getMessage().release();
+			out.writeBytes(buf);
+			
+			buf.release();
+			
 		
 		} catch (Exception e) {
 						

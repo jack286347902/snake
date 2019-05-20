@@ -21,7 +21,7 @@ public class EventDispatchHandler extends ChannelInboundHandlerAdapter {
     	
     	try {
 	    	
-	    	EVENT_PROCESSOR.enqueue(ctx.channel(), 0, (ByteBuf)msg);
+	    	EVENT_PROCESSOR.enqueue(ctx.channel(), (ByteBuf)msg);
 	    		    		    	    	
     	} finally {
     		ReferenceCountUtil.release(msg);

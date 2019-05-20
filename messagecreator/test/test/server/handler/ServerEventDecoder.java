@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.snake.testmessage.event.MessageEvent;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -12,66 +13,28 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 public class ServerEventDecoder extends ByteToMessageDecoder {
 	
 	public static final Logger logger = LogManager.getLogger("EventDispatchHandler");
-	
-	
-	public static final int SIZE_LENGTH = 4;
-	
+		
 	
 	@Override
-	protected void decode(ChannelHandlerContext arg0, ByteBuf arg1,
-			List<Object> arg2) throws Exception {
-				
-		ByteBuf object = decode(arg0, arg1);
+	protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		
-		if(null != object)
-			arg2.add(object);
-
-	}
-	
-	/**
-	 * 
-	 * @param ctx
-	 * @param buf
-	 * @return
-	 * @throws Exception
-	 * 
-	 * Messsage format:
-	 * 		    uint16 size;
-	 * 			byte[] date;
-	 * 
-	 */
-	
-	private ByteBuf decode(ChannelHandlerContext ctx, ByteBuf buf) 
-			throws Exception {
-
-		if(buf.isReadable(SIZE_LENGTH)) {
+		while (in.isReadable(MessageEvent.CLIENT_SIZE_LENGTH)) {
 			
 			// 标记读位置
-			buf.markReaderIndex();
+			in.markReaderIndex();
 			
-			int size = buf.readInt();
+			int size = in.readShort();
 			
-			buf.resetReaderIndex();
+			in.resetReaderIndex();
 			
-			if(buf.isReadable(size)) 
-				return buf.readRetainedSlice(size);
-			
-//			if(buf.isReadable(size)) {
-//				
-//				ByteBuf heapBuf = ctx.alloc().heapBuffer(size);
-//				
-//				buf.readBytes(heapBuf, size);
-//				
-//				return heapBuf;
-//				
-//				
-//			}
-
+			if(in.isReadable(size)) 
+				out.add(in.readRetainedSlice(size));
+			else 
+				break;
 		}
-				
-		return null;
 
 	}
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

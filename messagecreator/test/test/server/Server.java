@@ -17,7 +17,7 @@ public class Server extends Thread {
 	
 	public static final Logger logger = LogManager.getLogger("Server");
 	
-	private static final int PORT = 6666;
+	private static final int PORT = 7777;
 	private static final int BOSS_THREADS = 1;
 	
 	private static final boolean IS_DEBUG = true;
@@ -80,7 +80,7 @@ public class Server extends Thread {
 	public void run() {
 
         try {
-        	
+//        	
 //        	if(IS_DEBUG)
 //        		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
         	

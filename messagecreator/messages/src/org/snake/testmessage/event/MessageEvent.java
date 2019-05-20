@@ -6,22 +6,33 @@ import org.snake.testmessage.pool.MessagePool;
 
 
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import test.client.handler.crypt.ByteValidate;
 
 public class MessageEvent {
 
 	
-	public static final int CMD_OFFSET = 4;
+	public static final int CLIENT_SIZE_LENGTH = 2;
+	// SIZE 2 CMD 2
+	public static final int CLIENT_HEADER_LENGTH = 4;
 	
-	public static final int HEADER_LENGTH = 6;
-	public static final int UUID_LENGTH = 8;
+	public static final int SERVER_SIZE_LENGTH = 4;
+	// SIZE 4 CMD 2
+	public static final int SERVER_HEADER_LENGTH = 6;
+	public static final int VALIDATE_LENGTH = 1;
+	
+	// HEADER + VALIDATE
+	public static final int SERVER_EXTRA_LENGTH = SERVER_HEADER_LENGTH + VALIDATE_LENGTH;
+	// HEADER + VALIDATE
+	public static final int CLIENT_EXTRA_LENGTH = CLIENT_HEADER_LENGTH + VALIDATE_LENGTH;
+	
+	public static final int VALIDATE = 0;
 	
 	private Channel channel;
 	private Message message;
-	private long uuid;
 
 	public Channel getChannel() {
 		return channel;
@@ -35,27 +46,46 @@ public class MessageEvent {
 	public void setMessage(Message message) {
 		this.message = message;
 	}
-	public long getUuid() {
-		return uuid;
-	}
-	public void setUuid(long uuid) {
-		this.uuid = uuid;
-	}
+
 	
 	/*
-	 *  client send and receive data with connector:
+	 *  connector send to logic server:
 	 *  parse message from directbuf
 	 *  message structure:
 	 * 			short size
 	 * 			short cmd
 	 * 			byte[] data -> message
+	 * 			byte validate
 	 *  
 	 *  @param buf directbuf from netty
 	 *  
 	 */
-	public void parse(ByteBuf buf) throws UnsupportedEncodingException {
+	public void parseFromClient(ByteBuf buf) throws UnsupportedEncodingException {
 		
-		buf.skipBytes(CMD_OFFSET);
+		buf.skipBytes(CLIENT_SIZE_LENGTH);
+		short cmd = buf.readShort();
+
+		message = MessagePool.borrowMessage(cmd);
+		
+		message.parse(buf);
+		
+	}
+	
+	public static Message parseMessageFromClient(ByteBuf buf) throws UnsupportedEncodingException {
+		
+		buf.skipBytes(CLIENT_SIZE_LENGTH);
+		short cmd = buf.readShort();
+
+		Message message = MessagePool.borrowMessage(cmd);
+		
+		message.parse(buf);
+		
+		return message;
+	}
+	
+	public void parseFromServer(ByteBuf buf) throws UnsupportedEncodingException {
+		
+		buf.skipBytes(SERVER_SIZE_LENGTH);
 		short cmd = buf.readShort();
 
 		message = MessagePool.borrowMessage(cmd);
@@ -64,107 +94,104 @@ public class MessageEvent {
 		
 	}
 
-	
+	public static Message parseMessageFromServer(ByteBuf buf) throws UnsupportedEncodingException {
+		
+		buf.skipBytes(SERVER_SIZE_LENGTH);
+		short cmd = buf.readShort();
+
+		Message message = MessagePool.borrowMessage(cmd);
+		
+		message.parse(buf);
+		
+		return message;
+	}
+
+
 	/*
-	 *  connecter send and receive data from other server:
-	 *  parse message from directbuf
+	 *  logic server send to connector:
+	 *  write message to directorbuf
 	 *  message structure:
-	 * 			short size
+	 * 			int size
 	 * 			short cmd
 	 * 			byte[] data -> message
+	 * 			byte validate
 	 *  
 	 *  @param buf directbuf from netty
 	 *  
 	 */
-//	public void parseWithUuid(ByteBuf buf) throws Exception {
-//		
-//		try {
-//		
-//			buf.skipBytes(CMD_OFFSET);
-//			short cmd = buf.readShort();
-//			buf.skipBytes(HASH_LENGTH);
-//			
-//			message = MessagePool.borrowMessage(cmd);
-//			
-//			message.parse(buf);
-//			
-//			uuid = buf.readLong();
-//			
-//		} finally {
-//			buf.release();
-//		}
-//	}
+	public void arrayToClient(ChannelHandlerContext ctx, ByteBuf out) throws UnsupportedEncodingException {
+		// TODO Auto-generated method stub
 
-	
-	private byte dataHash(int dataIndex, int dataSize, ByteBuf buf) {
-		
-		byte hash = 0;
-		
-		for(int i = 0; i < dataSize; ++i)
-			hash ^= buf.getByte(dataIndex++);
-		
-		return hash;
+		arrayToClient(message, ctx, out);
 		
 	}
-
-	// Exception: message recycled by gc
-	public void array(ByteBuf buf) throws UnsupportedEncodingException {
+	
+	public static void arrayToClient(Message message, ChannelHandlerContext ctx, ByteBuf out) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
+
+		int totalLen = message.getSize() + SERVER_EXTRA_LENGTH;
 		
-		
-		// this line to next 5 unempty line must here, 
-		// can't move to message.array(buf)
-		// why??????????????????????????????????????
-		// 
-		// cacl total length if in message.array(buf), 
-		// every inner message recacl it's length
-		// length changes again and again
-		int totalLen = message.getSize() + HEADER_LENGTH;
-		
-		if(!buf.isWritable(totalLen))
-			buf.ensureWritable(totalLen);
+		ByteBuf buf = ctx.alloc().heapBuffer(totalLen);
 		
 		buf.writeInt(totalLen);
 		buf.writeShort(message.getCmdShort());
 		
 		message.array(buf);
-
-		// next unempty line must here, 
-		// can't move to message.array(buf)
-		// why??????????????????????????????????????
 		
+		int offset = buf.arrayOffset() + buf.readerIndex();
+		
+		// do validate in connector
+		buf.writeByte(ByteValidate.xor(buf.array(), offset, buf.readableBytes()));
+		
+		out.writeBytes(buf);
+		
+		// if calls int message.array(buf)
+		// every inner message calls it's release
+		message.release();
+		buf.release();
+		
+		
+	}
+	
+	/*
+	 *  logic server send to connector:
+	 *  write message to directorbuf
+	 *  message structure:
+	 * 			int size
+	 * 			short cmd
+	 * 			byte[] data -> message
+	 * 			byte validate
+	 *  
+	 *  @param buf directbuf from netty
+	 *  
+	 */
+	public void arrayToServer(ByteBuf buf) throws UnsupportedEncodingException {
+		// TODO Auto-generated method stub
+
+		arrayToServer(message, buf);
+		
+	}
+	
+	public static void arrayToServer(Message message, ByteBuf buf) throws UnsupportedEncodingException {
+		// TODO Auto-generated method stub
+
+		int totalLen = message.getSize() + CLIENT_EXTRA_LENGTH;
+		
+		if(!buf.isWritable(totalLen))
+			buf.ensureWritable(totalLen);
+		
+		buf.writeShort(totalLen);
+		buf.writeShort(message.getCmdShort());
+		
+		message.array(buf);
+		
+		// do validate in connector
+		buf.writeByte(VALIDATE);
 		
 		// if calls int message.array(buf)
 		// every inner message calls it's release
 		message.release();
 		
-
 	}
-	
-	
-	
-	// Exception: message recycled by gc
-//	public void arrayWithUuid(ByteBuf buf) throws Exception {
-//
-//		int headIndex = buf.writerIndex();
-//		
-//		buf.writeBytes(ZERO_HEADER);
-//		
-//		int dataIndex = buf.writerIndex();
-//		message.array(buf);
-//		int dataSize = buf.writerIndex() - dataIndex;
-//		
-//		buf.writeLong(uuid);
-//		
-//		int size = buf.writerIndex() - headIndex;
-//		
-//		buf.setShort(headIndex, size);
-//		buf.setShort(headIndex + CMD_OFFSET, message.getCmdShort());
-//		buf.setByte(headIndex + DATA_HASH_OFFSET, dataHash(dataIndex, dataSize, buf));
-//		
-//		message.release();
-//	}
-
-	
 	
 }
