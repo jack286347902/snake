@@ -1,0 +1,73 @@
+
+java_package = "org.snake.message.command.login";
+group_cmd = 200;
+
+// login web -> center server
+message CreateUser {
+	required string token;
+	required int64 uuid;
+	required int64 sign;
+}
+
+// center server -> other server
+message NotifyCreateUser {
+	required int64 uuid;
+}
+
+// login web -> center server
+message LoadUser {
+	required string token;
+	required int64 uuid;
+	required int64 sign;
+}
+
+// logic server -> other server
+message NotifyLoadUser {
+	required string token;
+	required int64 uuid;
+}
+
+enum LoadedPart {
+	USER		= 1;
+	ROLE		= 2;
+	MAIL		= 3;
+	FRIEND	 	= 4;
+}
+
+// other server -> logic server
+message UserLoadedPart {
+	required int64 uuid;
+	required LoadedPart sign;
+}
+
+// logic server -> connector/login web
+// user load all data success
+message UserLoaded {
+	required string token;
+	required int64 uuid;
+	required string ip;
+	required int32 port;
+}
+
+// logic server -> other server: 
+// 		connector/login web...
+// remove user
+message RemoveUser {
+	required int64 uuid;
+}
+
+
+// logic server -> center server
+// 				-> loging web
+// user removed
+message UserRemoved {
+	required int64 uuid;
+}
+
+
+// logic server -> connector/login web
+// user load all data success
+message ConnectorShutdown {
+	required string ip;
+	required int32 port;
+}

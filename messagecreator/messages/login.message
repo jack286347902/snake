@@ -1,6 +1,7 @@
 
-java_package = "org.snake.testmessage.login";
-group_cmd = 100;
+java_package = "org.snake.message.login";
+group_cmd = 2000;
+
 
 
 // client -> connector
@@ -8,36 +9,6 @@ message ClientLogin {
 	required string token;
 }
 
-// login center -> connector
-// user load all data success
-message UserLoaded {
-	required string token;
-	required int64 uuid;
-	required string transferIp;
-	required int32 transferPort;
-}
 
-// login center -> connector
-// user move to another server
-message UserMoving {
-	required int64 uuid;
-}
-// login center -> connector
-// user move to another server success
-message UserMovingSuccess {
-	required int64 uuid;
-	required string transferIp;
-	required int32 transferPort;
-}
 
-// login center -> connector
-// remove user
-message ClientRemove {
-	required int64 uuid;
-}
 
-// connector -> login center 
-// remove user
-message ConnectorIPPort {
-	required string connectorIPPort;
-}

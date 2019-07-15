@@ -1,0 +1,10 @@
+zookeeper.enabled: true
+#zookeeper.server: 47.106.106.53:9036,47.106.106.53:9037,47.106.106.53:9038
+zookeeper.server: 127.0.0.1:2181
+zookeeper.namespace: server
+zookeeper.digest: admin_auth:dkkisekkjskjd                     #zkCli.sh acl 命令 addauth digest mpush
+zookeeper.sessionTimeoutMs: 1000          #会话超时时间，单位为毫秒，默认60000ms,连接断开后，其它客户端还能请到临时节点的时间
+zookeeper.connectionTimeoutMs: 6000        #连接创建超时时间，单位为毫秒
+zookeeper.maxRetries: 3                     #最大重试次数
+zookeeper.baseSleepTimeMs: 1000            #初始sleep时间 ,毫秒
+

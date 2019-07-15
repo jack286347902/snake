@@ -2,7 +2,7 @@ package test.disruptor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.snake.testmessage.event.MessageEvent;
+import org.snake.message.event.MessageEvent;
 
 import com.lmax.disruptor.ExceptionHandler;
 

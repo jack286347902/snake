@@ -1,6 +1,6 @@
 package test.disruptor;
 
-import org.snake.testmessage.event.MessageEvent;
+import org.snake.message.event.MessageEvent;
 
 import com.lmax.disruptor.EventFactory;
 

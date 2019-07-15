@@ -63,6 +63,8 @@ public class MessageEvent {
 		
 		message.parse(buf);
 		
+		buf.release();
+		
 	}
 	
 	public static Message parseMessageFromClient(ByteBuf buf) throws UnsupportedEncodingException {
@@ -73,6 +75,8 @@ public class MessageEvent {
 		Message message = MessagePool.borrowMessage(cmd);
 		
 		message.parse(buf);
+		
+		buf.release();
 		
 		return message;
 	}
@@ -86,6 +90,8 @@ public class MessageEvent {
 		
 		message.parse(buf);
 		
+		buf.release();
+		
 	}
 
 	public static Message parseMessageFromServer(ByteBuf buf) throws UnsupportedEncodingException {
@@ -96,6 +102,8 @@ public class MessageEvent {
 		Message message = MessagePool.borrowMessage(cmd);
 		
 		message.parse(buf);
+		
+		buf.release();
 		
 		return message;
 	}
@@ -113,19 +121,20 @@ public class MessageEvent {
 	 *  @param buf directbuf from netty
 	 *  
 	 */
-	public void arrayToClient(ChannelHandlerContext ctx, ByteBuf out) throws UnsupportedEncodingException {
+	public void messageToClient(ByteBuf out) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 
-		arrayToClient(message, ctx, out);
+		messageToClient(message, out);
 		
 	}
 	
-	public static void arrayToClient(Message message, ChannelHandlerContext ctx, ByteBuf out) throws UnsupportedEncodingException {
+	public static void messageToClient(Message message, ByteBuf buf) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 
 		int totalLen = message.getSize() + SERVER_EXTRA_LENGTH;
 		
-		ByteBuf buf = ctx.alloc().heapBuffer(totalLen);
+		if(!buf.isWritable(totalLen))
+			buf.ensureWritable(totalLen);
 		
 		buf.writeInt(totalLen);
 		buf.writeShort(message.getCmdShort());
@@ -137,14 +146,10 @@ public class MessageEvent {
 		// do validate in connector
 		buf.writeByte(ByteValidate.xor(buf.array(), offset, buf.readableBytes()));
 		
-		out.writeBytes(buf);
-		
 		// if calls int message.array(buf)
 		// every inner message calls it's release
 		message.release();
-		buf.release();
-		
-		
+
 	}
 	
 	/*
@@ -159,14 +164,14 @@ public class MessageEvent {
 	 *  @param buf directbuf from netty
 	 *  
 	 */
-	public void arrayToServer(ByteBuf buf) throws UnsupportedEncodingException {
+	public void messageToServer(ByteBuf buf) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 
-		arrayToServer(message, buf);
+		messageToServer(message, buf);
 		
 	}
 	
-	public static void arrayToServer(Message message, ByteBuf buf) throws UnsupportedEncodingException {
+	public static void messageToServer(Message message, ByteBuf buf) throws UnsupportedEncodingException {
 		// TODO Auto-generated method stub
 
 		int totalLen = message.getSize() + CLIENT_EXTRA_LENGTH;
@@ -180,7 +185,12 @@ public class MessageEvent {
 		message.array(buf);
 		
 		// do validate in connector
-		buf.writeByte(VALIDATE);
+//		buf.writeByte(VALIDATE);
+		
+		int offset = buf.arrayOffset() + buf.readerIndex();
+		
+		// do validate in connector
+		buf.writeByte(ByteValidate.xor(buf.array(), offset, buf.readableBytes()));
 		
 		// if calls int message.array(buf)
 		// every inner message calls it's release

@@ -2,7 +2,7 @@ package test.server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.snake.testmessage.pool.MessagePool;
+import org.snake.message.pool.MessagePool;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;

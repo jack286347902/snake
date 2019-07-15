@@ -1,12 +1,17 @@
 package org.snake;
 
-
-import org.snake.command.client.CommandClient;
-import org.snake.transfer.server.Server;
+import org.snake.connector.command.zookeeper.ServersImpl;
+import org.snake.connector.command.zookeeper.ZkDataImpl;
+import org.snake.connector.command.zookeeper.ZkManagerImpl;
+import org.snake.zookeeper.manager.zookeeper.ZkData;
+import org.snake.zookeeper.servers.Servers;
+import org.snake.zookeeper.zookeeper.ZkClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import lombok.Setter;
 
 /**
  * 
@@ -15,20 +20,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AppConnector implements CommandLineRunner {
 
-
 	@Autowired
-	private Server server;
-	
-	@Autowired
-	private CommandClient commandClient;
-
-	public void setServer(Server server) {
-		this.server = server;
-	}
-
-    public void setCommandClient(CommandClient commandClient) {
-		this.commandClient = commandClient;
-	}
+	@Setter
+	private ZkClient zkClient;
 
 	public static void main( String[] args )
     {
@@ -39,8 +33,18 @@ public class AppConnector implements CommandLineRunner {
 	public void run(String... args) throws Exception {
 		// TODO Auto-generated method stub
 				
-		commandClient.connect("127.0.0.1", 8888);
-		server.start();
+		ServersImpl serversImpl = ServersImpl.getInstance();
+		ZkManagerImpl zkManagerImpl = ZkManagerImpl.getInstance();
+	
+		ZkData zkData = new ZkDataImpl();
+		
+		serversImpl.setZkClient(zkClient);
+		
+		Servers servers = serversImpl;
+		
+		zkManagerImpl.init(zkData, zkClient, servers);
+		
+		servers.start();
 
 	}
 

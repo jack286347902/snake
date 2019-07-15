@@ -1,0 +1,26 @@
+
+java_package = "org.snake.message.publics";
+group_cmd = 1000;
+
+enum ServerType {
+	CENTER_SERVER	= 1;
+	LOGIN_WEB		= 2;
+	CONNECTOR		= 3;
+	TRANSFER_SERVER = 4;
+	LOGIC_SERVER	= 5;
+}
+
+// other server -> center server
+message HeartBeat {
+}
+
+
+enum UserLoginState {
+	CREATING		= 1;
+	LOADING			= 2;
+	LOADED			= 3;
+	LOGIN 			= 4;
+	RELOGIN			= 5;
+	LOGOUT 			= 6;
+	REMOVE			= 7;
+}

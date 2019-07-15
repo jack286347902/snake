@@ -2,15 +2,15 @@ package test.client;
 
 import java.util.List;
 
-import org.snake.testmessage.Message;
-import org.snake.testmessage.event.MessageEvent;
-import org.snake.testmessage.login.ClientLogin;
-import org.snake.testmessage.m1.Empty;
-import org.snake.testmessage.m1.Item;
-import org.snake.testmessage.m1.Small;
-import org.snake.testmessage.m2.FirstRequest;
-import org.snake.testmessage.m3.SecondRequest;
-import org.snake.testmessage.pool.MessagePool;
+import org.snake.message.Message;
+import org.snake.message.event.MessageEvent;
+import org.snake.message.login.ClientLogin;
+import org.snake.message.m1.Empty;
+import org.snake.message.m1.Item;
+import org.snake.message.m1.Small;
+import org.snake.message.m2.FirstRequest;
+import org.snake.message.m3.SecondRequest;
+import org.snake.message.pool.MessagePool;
 
 public class FillEvent {
 	

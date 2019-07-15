@@ -13,6 +13,8 @@ import org.jack.messagecreator.message.Message;
 import org.jack.messagecreator.message.MessageGroup;
 import org.jack.messagecreator.message.MessageItem;
 
+import net.sf.json.JSONObject;
+
 
 
 public class JavaMessageWriter {
@@ -45,18 +47,35 @@ public class JavaMessageWriter {
 		
 		Iterator<String> iter = AllMessage.getInstance().getMgMap().keySet().iterator();
 		
-		while(iter.hasNext() && null == parentPackage) {
+		while(iter.hasNext()) {
 			
 			String abc = iter.next();
 			
 			String packagePath = AllMessage.getInstance().getMgMap().get(abc).getJavaPackage();
 			
-			int index = packagePath.lastIndexOf(".");
+			if(null == parentPackage) {
+				
+				int index = packagePath.lastIndexOf(".");
+				
+				if(-1 != index)
+					parentPackage = packagePath.substring(0, index);
+				else
+					throw new Exception("ParentPackage error");
 			
-			if(-1 != index)
-				parentPackage = packagePath.substring(0, index);
-			else
-				throw new Exception("ParentPackage error");
+			} else {
+				
+				if(packagePath.contains(parentPackage))
+					continue;
+				
+				int index = packagePath.lastIndexOf(".");
+				
+				if(-1 != index)
+					parentPackage = packagePath.substring(0, index);
+				else
+					throw new Exception("ParentPackage error");
+				
+			}
+
 				
 		}
 	}
@@ -145,6 +164,7 @@ public class JavaMessageWriter {
 		imports = "\r\nimport " + parentPackage + ".Message;\r\n"
 				+ "import " + parentPackage + ".pool.MessagePool;\r\n\r\n";
 		copyFile(dir, dirPath, parentPackage + ".event", imports, "MessageEvent.java");
+		copyFile(dir, dirPath, parentPackage + ".event", imports, "CommandMessageEvent.java");
 		
 		dirPath = outPath + "\\" + (parentPackage + ".factory").replace('.', '\\');
 		
@@ -233,6 +253,8 @@ public class JavaMessageWriter {
 			
 			for(Message message: entry.getValue().getMessages()) {
 				
+				if(message.isEnumType())
+					continue;
 
 				if(isNotFirstCmd)
 					head.append(",\r\n");
@@ -322,6 +344,7 @@ public class JavaMessageWriter {
 		return baseTypeMap;
 	}
 	
+	public static final int INT_LENGTH = 4;
 	private static final Map<String, Integer> BASE_TYPE_MAP_LENGTH = createBaseTypeMapLength();
 	
 	private static Map<String, Integer> createBaseTypeMapLength() {
@@ -519,19 +542,24 @@ public class JavaMessageWriter {
 //					
 //					}
 					
+					Message importMessage = getImportMessage(type, item, mg, importMap);
+					
+					if(importMessage.isEnumType())
+						size += INT_LENGTH;
+					
 					addImports(type, item, mg, importMap);
 					
-					objectBody(type, name, body);
-					objectGetterAndSetter(type, name, upperName, getterAndSetter);
-					objectRetainBody(type, name, retainBody);
+					objectBody(type, name, body, importMessage.isEnumType());
+					objectGetterAndSetter(type, name, upperName, getterAndSetter, importMessage.isEnumType());
+					objectRetainBody(type, name, retainBody, importMessage.isEnumType());
 					
-					objectReadBody(type, name, parseBody);
-					objectWriteBody(name, arrayBody);
+					objectReadBody(type, name, parseBody, importMessage.isEnumType());
+					objectWriteBody(name, arrayBody, importMessage.isEnumType());
 
-					objectReleaseBody(name, releaseBody);
-					objectReleaseClearBody(name, releaseClearBody);
+					objectReleaseBody(name, releaseBody, importMessage.isEnumType());
+					objectReleaseClearBody(type, name, releaseClearBody, importMessage.isEnumType());
 					
-					objectSize(name, toSizeBody);
+					objectSize(name, toSizeBody, importMessage.isEnumType());
 					
 					
 				} else {
@@ -570,20 +598,23 @@ public class JavaMessageWriter {
 					
 					addImports(type, item, mg, importMap);
 					
+					Message importMessage = getImportMessage(type, item, mg, importMap);
+					
+					
 					arrayObjectToString(type, name, toStringBody);
 					
 					objectArray(type, name, body);
 					objectArrayGetterAndSetter(type, name, upperName, getterAndSetter);
 					
-					readObjectList(name, type, parseBody);
-					writeObjectList(name, type, arrayBody);
+					readObjectList(name, type, parseBody, importMessage.isEnumType());
+					writeObjectList(name, type, arrayBody, importMessage.isEnumType());
 					
-					objectRetainBodyList(name, type, retainBody);
+					objectRetainBodyList(name, type, retainBody, importMessage.isEnumType());
 					
-					objectReleaseBodyList(name, type, releaseBody);
+					objectReleaseBodyList(name, type, releaseBody, importMessage.isEnumType());
 					objectReleaseClearBodyList(name, type, releaseClearBody);
 					
-					objectArraySize(type, name, toSizeBody);
+					objectArraySize(type, name, toSizeBody, importMessage.isEnumType());
 					
 				} else {
 					
@@ -660,6 +691,48 @@ public class JavaMessageWriter {
 		out.close();
 	}
 	
+	private Message getImportMessage(String type, MessageItem item, MessageGroup mg,
+			Map<String, String> importMap) throws Exception {
+		
+		Message message = null;
+		
+		if(null == mg.getMessage(type)) {
+			
+				int found = 0;
+			
+				for(String fileName: mg.getImports()) {
+					
+					MessageGroup mgtemp = AllMessage.getInstance().getMgMap().get(fileName);
+					
+					if(null == mgtemp.getMessage(type))
+						continue;
+					else  {
+
+						++found;
+						
+						message = mgtemp.getMessage(type);
+						
+						importMap.put(type, mgtemp.getJavaPackage());
+					}
+						
+					
+				}
+				
+				if(0 == found)
+					throw new Exception("not found message: " + type);
+				else if (found > 1)
+					throw new Exception("found message: " + type + " times: " + found);
+
+			
+		} else {
+			message = mg.getMessage(type);
+		}
+		
+
+		
+		return message;
+	}
+	
 	private void addImports(String type, MessageItem item, MessageGroup mg,
 			Map<String, String> importMap) throws Exception {
 		
@@ -731,7 +804,10 @@ public class JavaMessageWriter {
 		}
 	}
 	
-	private void objectSize(String name, StringBuilder builder) {
+	private void objectSize(String name, StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum)
+			return;
 		
 		builder.append("\t\tsize += ")
 			   .append(name)
@@ -767,7 +843,18 @@ public class JavaMessageWriter {
 		}
 	}
 	
-	private void objectArraySize(String type, String name, StringBuilder builder) {
+	private void objectArraySize(String type, String name, 
+			StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum) {
+			
+			builder .append("\t\tsize += ")
+		   	   .append(name)
+		   	   .append(".size() * ENUM_LENGTH;\r\n");
+			
+			return; 
+		}
+		
 		
 		builder.append("\r\n\t\tfor(")
 			   .append(type)
@@ -894,7 +981,9 @@ public class JavaMessageWriter {
 			   .append("\t}\r\n");
 	}
 	
-	private void objectReadBody(String type, String name, StringBuilder builder) {
+	private void objectReadBody(String type, String name, 
+			StringBuilder builder, 
+			boolean isEnum) {
 		
 //		builder.append("\t\t")
 //		   .append(name)
@@ -904,13 +993,36 @@ public class JavaMessageWriter {
 //		   .append(type)
 //		   .append(".CMD_INTEGER);\r\n"); 
 		
+		if(isEnum) {
+			
+			builder.append("\t\t")
+				   .append(name)
+				   .append(" = ")
+				   .append(type)
+				   .append(".get(")
+				   .append("buf.readInt());\r\n");
+			
+			return;
+			
+		}
+		
 		builder.append("\t\t")
 				 .append(name)
 				 .append(".parse(buf)")
 				 .append(";\r\n");
 	}
 	
-	private void objectWriteBody(String name, StringBuilder builder) {
+	private void objectWriteBody(String name, StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum) {
+			
+			builder.append("\t\t")
+				   .append("buf.writeInt(")
+				   .append(name)
+				   .append(".getValue());\r\n");
+			
+			return;
+		}
 		
 		builder.append("\t\t")
 		 .append(name)
@@ -956,17 +1068,31 @@ public class JavaMessageWriter {
 	}
 	
 	
-	private void objectBody(String type, String name, StringBuilder builder) {
+	private void objectBody(String type, String name, StringBuilder builder, boolean isEnum) {
 		
 		builder.append("\tprivate ")
 		 	.append(type)
 		 	.append(" ")
 		 	.append(name)
-		 	.append(" = null;\r\n");
+		 	.append(" = ");
+		
+			if(isEnum) {
+				
+				builder.append(type)
+					   .append(".START;\r\n");
+				
+			} else {
+				builder.append("null;\r\n");
+			}
+				 
+		
+		 	
 	
 	}
 	
-	private void objectGetterAndSetter(String type, String name, String upperName, StringBuilder builder) {
+	private void objectGetterAndSetter(String type, String name, 
+			String upperName, StringBuilder builder, 
+			boolean isEnum) {
 	
 		builder.append("\tpublic ")
 			   .append(type)
@@ -977,6 +1103,22 @@ public class JavaMessageWriter {
 			   .append(name)
 			   .append(";\r\n")
 			   .append("\t}\r\n");
+		
+		if(isEnum) {
+		builder.append("\r\n\tpublic void set")
+			   .append(upperName)
+			   .append("(")
+			   .append(type)
+			   .append(" ")
+			   .append(name)
+			   .append(") {\r\n")
+			   .append("\t\tthis.")
+			   .append(name)
+			   .append(" = ")
+			   .append(name)
+			   .append(";\r\n")
+			   .append("\t}\r\n");
+		}
 		
 		
 //		builder.append("\tpublic ")
@@ -1004,7 +1146,8 @@ public class JavaMessageWriter {
 	
 	}
 	
-	private void objectRetainBody(String type, String name, StringBuilder builder) {
+	private void objectRetainBody(String type, String name, 
+			StringBuilder builder, boolean isEnum) {
 	
 //		builder.append("\t\tif(null != ")
 //		   .append(name)
@@ -1012,6 +1155,9 @@ public class JavaMessageWriter {
 //		builder.append("\t\t\t")
 //		   .append(name)
 //		   .append(".retain();\r\n\r\n");
+		
+		if(isEnum)
+			return;
 		
 		
 		builder.append("\t\tif(null == ")
@@ -1031,15 +1177,31 @@ public class JavaMessageWriter {
 	
 	}
 	
-	private void objectReleaseBody(String name, StringBuilder builder) {
+	private void objectReleaseBody(String name, StringBuilder builder, boolean isEnum) {
 	
+		if(isEnum)
+			return;
+		
 		builder.append("\t\t")
 			   .append(name)
 			   .append(".release();\r\n");
 	
 	}
 	
-	private void objectReleaseClearBody(String name, StringBuilder builder) {
+	private void objectReleaseClearBody(String type, String name, StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum) {
+			
+			builder.append("\t\t\t")
+				.append(name)
+				.append(" = ")
+				.append(type)
+				.append(".START;\r\n");
+			
+			return;
+			
+		}
+		
 		builder.append("\t\t\t")
 				.append(name)
 				.append(" = null;\r\n");
@@ -1113,11 +1275,32 @@ public class JavaMessageWriter {
 		
 	}
 	
-	private void readObjectList(String name, String readType, StringBuilder builder) {
+	private void readObjectList(String name, String readType, 
+			StringBuilder builder, boolean isEnum) {
 	
 		String nameLen = name + "Len";
 		String tempItemName = readType.substring(0, 1).toLowerCase() 
 				+ readType.substring(1) + "Temp";
+		
+		if(isEnum) {
+			
+			builder.append("\r\n\t\tshort ")
+			   .append(nameLen)
+			   .append(" = buf.readShort();\r\n")
+			   .append("\t\tfor(int i = 0; i < ")
+			   .append(nameLen)
+			   .append("; ++i) {\r\n")			   
+			   .append("\t\t\t")
+			   .append(name)
+			   .append(".add(")
+			   .append(readType)
+			   .append(".get(buf.readInt())")
+			   .append(");\r\n")
+			   .append("\t\t}\r\n\r\n");
+			
+			return;
+			
+		}
 		
 		builder.append("\r\n\t\tshort ")
 			   .append(nameLen)
@@ -1145,10 +1328,30 @@ public class JavaMessageWriter {
 			   .append("\t\t}\r\n\r\n");
 	}
 	
-	private void writeObjectList(String name, String type, StringBuilder builder) {
+	private void writeObjectList(String name, String type, StringBuilder builder, boolean isEnum) {
 	
 		String tempItemName = type.substring(0, 1).toLowerCase() 
 				+ type.substring(1) + "Temp";
+		
+		if(isEnum) {
+			
+			builder.append("\r\n\t\tbuf.writeShort(")
+			   .append(name)
+			   .append(".size());\r\n")
+			   .append("\t\tfor(")
+			   .append(type)
+			   .append(" ")
+			   .append(tempItemName)
+			   .append(": ")
+			   .append(name)
+			   .append(")\r\n")
+			   .append("\t\t\t")
+			   .append("buf.writeInt(")
+			   .append(tempItemName)
+			   .append(".getValue());\r\n\r\n");
+			
+			return;
+		}
 		
 		builder.append("\r\n\t\tbuf.writeShort(")
 			   .append(name)
@@ -1191,7 +1394,10 @@ public class JavaMessageWriter {
 		   .append(", buf);\r\n");
 	}
 	
-	private void objectRetainBodyList(String name, String type, StringBuilder builder) {
+	private void objectRetainBodyList(String name, String type, StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum)
+			return;
 		
 		String iterName = name + "Iter";
 		
@@ -1211,7 +1417,10 @@ public class JavaMessageWriter {
 	
 	}
 	
-	private void objectReleaseBodyList(String name, String type, StringBuilder builder) {
+	private void objectReleaseBodyList(String name, String type, StringBuilder builder, boolean isEnum) {
+		
+		if(isEnum)
+			return;
 		
 		String iterName = name + "Iter";
 		
@@ -1239,30 +1448,104 @@ public class JavaMessageWriter {
 	
 	private void objectReleaseClearBodyList(String name, String type, StringBuilder builder) {
 
-		String iterName = name + "Iter";
 		
 		builder.append("\r\n\t\t\t")
-			   .append(iterName)
-			   .append(" = ")
 			   .append(name)
-			   .append(".iterator();\r\n")
-			   .append("\t\t\twhile(")
-			   .append(iterName)
-			   .append(".hasNext()) {\r\n")
-			   .append("\t\t\t\t")
-			   .append(iterName)
-			   .append(".next();\r\n")
-			   .append("\t\t\t\t")
-			   .append(iterName)
-			   .append(".remove();\r\n")
-			   .append("\t\t\t}\r\n\r\n");
+			   .append(".clear();\r\n");
+//		String iterName = name + "Iter";
+//		
+//		builder.append("\r\n\t\t\t")
+//			   .append(iterName)
+//			   .append(" = ")
+//			   .append(name)
+//			   .append(".iterator();\r\n")
+//			   .append("\t\t\twhile(")
+//			   .append(iterName)
+//			   .append(".hasNext()) {\r\n")
+//			   .append("\t\t\t\t")
+//			   .append(iterName)
+//			   .append(".next();\r\n")
+//			   .append("\t\t\t\t")
+//			   .append(iterName)
+//			   .append(".remove();\r\n")
+//			   .append("\t\t\t}\r\n\r\n");
 		
 		
 	}
 
 	
-	private void writeEnumFile(MessageGroup mg, Message message, String outPath) {
+	private void writeEnumFile(MessageGroup mg, Message message, String outPath) throws Exception {
 		
+		StringBuilder head = new StringBuilder();
+		
+		head.append("package ")
+			  .append(mg.getJavaPackage())
+			  .append(";\r\n\r\n")
+			  .append("import net.sf.json.JSONObject;\r\n\r\n");
+		
+		head.append("public enum ")
+			.append(message.getMessageName())
+			.append(" {\r\n")
+			.append("\tSTART(Integer.MIN_VALUE),\r\n");
+		
+		for(MessageItem item: message.getItems()) {
+			
+			head.append("\t")
+				.append(item.getOption())
+				.append("(")
+				.append(item.getType())
+				.append("),\r\n");
+		}
+		
+		head.append("\tEND(Integer.MAX_VALUE);\r\n\r\n");
+		
+		head.append("\tprivate int value;\r\n")
+			.append("\tprivate ")
+			.append(message.getMessageName())
+			.append("(int value) {\r\n")
+			.append("\t\tthis.value = value;\r\n")
+			.append("\t}\r\n\r\n")
+			.append("\tpublic int getValue() {\r\n")
+			.append("\t\treturn value;\r\n")
+			.append("\t}\r\n\r\n")
+			.append("\tpublic void setValue(int value) {\r\n")
+			.append("\t\tthis.value = value;\r\n")
+			.append("\t}\r\n\r\n")
+			.append("\tpublic String toString() {\r\n")
+			.append("\t\tJSONObject object = new JSONObject();\r\n")
+			.append("\t\tobject.put(\"value\", value);\r\n")
+			.append("\t\treturn object.toString();\r\n")
+			.append("\t}\r\n\r\n");
+		
+		head.append("\tpublic static ")
+			.append(message.getMessageName())
+			.append(" get(int value) {\r\n\r\n")
+			.append("\t\tswitch (value) {\r\n");
+			
+		for(MessageItem item: message.getItems()) {
+			
+			head.append("\t\tcase ")
+				.append(item.getType())
+				.append(":\r\n")
+				.append("\t\t\treturn ")
+				.append(item.getOption())
+				.append(";\r\n");		
+			
+		}
+		
+		
+		head.append("\t}\r\n\r\n")
+			.append("\t\treturn END;\r\n")
+			.append("\t}\r\n")
+			.append("}");
+		
+		File file = new File(outPath + "\\" + message.getMessageName() + ".java");
+		FileOutputStream out = new FileOutputStream(file);
+		
+		out.write(head.toString().getBytes("UTF-8"));
+		
+		out.flush();
+		out.close();
 	}
 
 }

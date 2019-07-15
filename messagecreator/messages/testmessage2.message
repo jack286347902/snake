@@ -1,6 +1,6 @@
 import "testmessage.message"
-java_package = org.snake.testmessage.m2
-group_cmd = 2000;	
+java_package = org.snake.message.m2
+group_cmd = 20000;	
 
 //FirstRequest
 /*

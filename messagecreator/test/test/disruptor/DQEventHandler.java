@@ -2,7 +2,7 @@ package test.disruptor;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.snake.testmessage.event.MessageEvent;
+import org.snake.message.event.MessageEvent;
 
 import com.lmax.disruptor.EventHandler;
 

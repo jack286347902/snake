@@ -1,0 +1,15 @@
+###Redis settings
+spring:
+	redis:
+		database: 0
+		host: 127.0.0.1
+		port: 6379
+		password: 
+		timeout: 10000
+		lettuce:
+			pool:
+				max-active: 8
+				max-wait: 10000
+				max-idle: 5
+				min=idle: 1
+				shutdown-timeout: 100

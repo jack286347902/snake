@@ -1,7 +1,7 @@
 package test.server.handler;
 
 
-import org.snake.testmessage.event.MessageEvent;
+import org.snake.message.event.MessageEvent;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -16,7 +16,7 @@ public class ServerEventEncoder extends MessageToByteEncoder<MessageEvent> {
 		try {
 			
 			// default 256 bytes
-			msg.arrayToClient(ctx, out);
+			msg.messageToClient(out);
 		
 		} catch (Exception e) {
 			

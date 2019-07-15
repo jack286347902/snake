@@ -180,7 +180,6 @@ public class MessageParser {
 				case ENUM:
 					
 					Message enumMessage = new Message();
-					messageGroup.addMessage(enumMessage);
 					
 					enumMessage.setType(ENUM);
 					
@@ -191,14 +190,14 @@ public class MessageParser {
 					
 					}
 					
-					enumMessage.setCmd(messageGroup.getMessageCmd());
-					
 					String enumName = parseOptionValue(option);
 					
 					if(!isUpperCase(enumName.charAt(0)))
 						throw new Exception("message: " + enumName + " need upper case first letter");
 					
 					enumMessage.setMessageName(enumName);
+					
+					messageGroup.addMessage(enumMessage);
 					
 					parseEnumItem(enumMessage);
 					break;
@@ -239,7 +238,7 @@ public class MessageParser {
 				
 				MessageItem item = new MessageItem();
 				
-				item.setOption(itemOption);
+				item.setOption(itemOption.toUpperCase());
 				item.setType(parseString());
 				
 				if(isCommontStart())

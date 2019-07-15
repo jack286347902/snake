@@ -10,6 +10,7 @@ public abstract class Message implements Cmd, ReferenceCount {
 	protected static final KeyedMessagePool MESSAGE_POOL 
 							= KeyedMessagePool.getInstance();
 	
+	public static final int ENUM_LENGTH = 4;
 	
 	public abstract int getSize();
 

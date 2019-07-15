@@ -31,4 +31,5 @@ public class AllMessage {
     public Map<String, MessageGroup> getMgMap() {
     	return mgMap;
     }
+
 }

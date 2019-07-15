@@ -1,0 +1,12 @@
+import = "public.message"
+java_package = "org.snake.message.command";
+group_cmd = 100;
+
+// other server -> center server
+message RegisterServer {
+	required ServerType serverType;
+	required int32 maxLoad;				// 最大人数
+	required int64 time;				// 启动时间
+	required string ip;
+	required int32 port;
+}

@@ -4,10 +4,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import test.client.handler.ClientEventDispatchHandler;
-import test.client.handler.DecryptHandler;
-import test.client.handler.EncryptHandler;
-import test.client.handler.EventDecoder;
-import test.client.handler.EventEncoder;
+import test.client.handler.MessageDecoder;
+import test.client.handler.MessageEncoder;
+import test.client.handler.MessageEncoder2;
 
 
 
@@ -18,10 +17,12 @@ public class ClientInitializer extends ChannelInitializer<SocketChannel> {
 
 		ChannelPipeline pipeline = ch.pipeline();
 				
-		pipeline.addLast("DecryptHandler", new DecryptHandler());
+//		pipeline.addLast("DecryptHandler", new DecryptHandler());
 		
-//		pipeline.addLast("EventDecoder", new EventDecoder());
-		pipeline.addLast("EventEncoder", new EventEncoder());
+		pipeline.addLast("MessageDecoder", new MessageDecoder());
+		pipeline.addLast("MessageEncoder", new MessageEncoder());
+		
+//		pipeline.addLast("MessageEncoder2", new MessageEncoder2());
 		
 		pipeline.addLast("ClientEventDispatchHandler", new ClientEventDispatchHandler());
 		
